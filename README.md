@@ -24,7 +24,7 @@ Besson-Tools/
 │   ├── mcp-server.mjs               #    stdio（默认）或 HTTP（--http）双模式，7 个工具
 │   ├── test-client.mjs              #    stdio 端到端测试
 │   ├── test-http.mjs                #    HTTP 冒烟测试
-│   └── package.json                 #    npm install 后即可运行
+│   └── package.json                 #    依赖清单（Release 的 mcp 包已自带）
 ├── dsh-plugin/                      # ③ DeepSeek Harness（DSH）插件
 │   ├── besson-tools.mjs             #    插件本体（零依赖，注册 7 个工具，v2.0.0）
 │   ├── preset-files/                #    整预设安装时需要的文件
@@ -56,15 +56,14 @@ v2.0.0 技能内容（史诗级）：
 - **标准工作流 + 高频坑点 Top 10 + 生态速查 + FAQ + 7 工具用法**
 - 保留完整 195 篇文章索引（A-F 六系列 + 4 篇独立文章 + 总汇页）
 
-使用效果：Agent 直接掌握教程站全部 195 篇文章的索引，能按"版本 + 主题"给出教程链接、
+使用效果：加载后直接掌握教程站全部 195 篇文章的索引，能按"版本 + 主题"给出教程链接、
 按目标生成学习路线、对比不同版本工程差异、生成环境搭建清单，并抓取文章正文。
 
 ## ② 作为 MCP 服务器使用（mcp）
 
 ```bash
 cd mcp
-npm install          # 安装 @modelcontextprotocol/sdk
-node mcp-server.mjs  # stdio 模式（默认）
+node mcp-server.mjs  # stdio 模式（默认；Release 的 besson-mcp 包已自带依赖，解压即用）
 node mcp-server.mjs --http   # HTTP 模式（环境变量 PORT，默认 3987）
 ```
 
@@ -90,8 +89,8 @@ MCP 服务器提供 **7 个工具**：
   "mcpServers": {
     "besson-tutorials": {
       "command": "node",
-      "args": ["/绝对路径/Besson-Skill-Mcp-Plugin/mcp/mcp-server.mjs"],
-      "env": { "BESSON_DATA_PATH": "/绝对路径/Besson-Skill-Mcp-Plugin/tools/index_data.json" }
+      "args": ["/path/to/Besson-Tools/mcp/mcp-server.mjs"],
+      "env": { "BESSON_DATA_PATH": "/path/to/Besson-Tools/tools/index_data.json" }
     }
   }
 }
@@ -99,7 +98,7 @@ MCP 服务器提供 **7 个工具**：
 
 HTTP 模式接入地址：`http://127.0.0.1:3987/mcp`（Streamable HTTP，会话由 `mcp-session-id` 头管理）。
 
-自带测试：`npm test`（stdio 端到端）与 `node test-http.mjs`（HTTP 冒烟）。
+自带测试：`node test-client.mjs`（stdio 端到端）与 `node test-http.mjs`（HTTP 冒烟）。
 
 ## ③ 作为 DeepSeek Harness（DSH）插件使用（plugin）
 
@@ -112,12 +111,12 @@ HTTP 模式接入地址：`http://127.0.0.1:3987/mcp`（Streamable HTTP，会话
 1. DSH → 插件栏 → 「添加插件」
 2. 输入 GitHub 仓库地址：
    `https://github.com/QZyme/dsh-besson-tools`
-   （或本地目录路径、或本包解压目录）
+   （或本仓库源码目录、或本包解压目录）
 3. 安装后（bundle 形态）重启或新开会话即可使用 7 个 `besson_tutorial_*` 工具
 
 > 注意：插件栏安装为**全局挂载**（所有会话可用）。若只想在 Besson 预设里使用，请用方式 B（预设行挂载）；两种方式不要同时启用，避免重复注册。
 
-### 方式 A：整预设安装（自带完整编码 Agent）
+### 方式 A：整预设安装（整套预设，开箱即用）
 
 把 `dsh-plugin/preset-files/preset.yml` 与 `dsh-plugin/besson-tools.mjs` 放入：
 
@@ -130,23 +129,22 @@ HTTP 模式接入地址：`http://127.0.0.1:3987/mcp`（Streamable HTTP，会话
 
 在 DSH Web 新建会话时选择该预设即可。
 
-### 方式 B：0.2.1+ 声明式预设（本地包挂载，当前仓库作者环境采用）
+### 方式 B：0.2.1+ 声明式预设（本地包挂载）
 
-1. 新建本地包目录（如 `C:\Users\<你>\dsh-besson-tools\`），放入：
+1. 新建本地包目录（如 `~/dsh-besson-tools/` 或任意目录），放入：
 
 ```
 package.json        # name: dsh-besson-tools, version: 2.0.0, type: module, main: besson-tools.mjs
 besson-tools.mjs    # ← 来自本包 dsh-plugin/
 ```
 
-2. 在 DSH profile（`~/.dsh/profiles/<profile>/`）内声明本地依赖并重装 profile：
+2. 在 DSH profile（`~/.dsh/profiles/<profile>/`）的 `package.json` 依赖里声明本地包：
 
-```bash
-# profile/package.json 的 dependencies 加：
-"dsh-besson-tools": "file:C:/Users/<你>/dsh-besson-tools"
-# 然后：
-dsh --profile <profile> install   # 或对 profile 目录 pnpm install
+```json
+"dsh-besson-tools": "file:<本地包目录>"
 ```
+
+然后在 DSH 中重新安装该 profile 的依赖（DSH 插件管理里会有提示）。
 
 3. 在 profile 的 `cordis.yml` 中给预设加一行（示例，与 preset-besson 一致）：
 
