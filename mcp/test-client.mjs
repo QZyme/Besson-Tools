@@ -9,7 +9,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const transport = new StdioClientTransport({
   command: process.execPath,
   args: [__dirname + '/mcp-server.mjs'],
-  stderr: 'pipe',
+  stderr: 'inherit',
 });
 const client = new Client({ name: 'besson-tutorials-mcp-test', version: '0.0.1' });
 
@@ -31,6 +31,10 @@ const cases = [
   ['besson_tutorial_fetch', { url: 'https://beishanair.github.io/2026/08/14/nf121/33fluid/', maxChars: 400 }],
   // 正文抓取：非法链接（应被拒绝）
   ['besson_tutorial_fetch', { url: 'https://example.com/evil', maxChars: 300 }],
+  // v2.0.0 新增工具
+  ['besson_tutorial_plan', { goal: 'Fabric 入门做第一个模组' }],
+  ['besson_tutorial_compare', { a: 'A', b: 'D' }],
+  ['besson_tutorial_env', { mcVersion: '1.21.1', loader: 'neoforge' }],
 ];
 for (const [name, args] of cases) {
   const res = await client.callTool({ name, arguments: args });
