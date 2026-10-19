@@ -1,8 +1,8 @@
 # 北山Besson 教程检索 · skill · mcp · plugin
 
-[![release](https://img.shields.io/github/v/release/QZyme/Besson-Skill-Mcp-Plugin)](https://github.com/QZyme/Besson-Skill-Mcp-Plugin/releases/latest)
+[![release](https://img.shields.io/github/v/release/QZyme/Besson-Tools)](https://github.com/QZyme/Besson-Tools/releases/latest)
 [![license](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-4c1)](LICENSE)
-[![last commit](https://img.shields.io/github/last-commit/QZyme/Besson-Skill-Mcp-Plugin)](https://github.com/QZyme/Besson-Skill-Mcp-Plugin/commits/main)
+[![last commit](https://img.shields.io/github/last-commit/QZyme/Besson-Tools)](https://github.com/QZyme/Besson-Tools/commits/main)
 [![site](https://img.shields.io/badge/site-Tomorrow--Land-0078d7)](https://beishanair.github.io/)
 
 > 北山Besson（BeiShan_Besson）Minecraft 模组开发教程站 [Tomorrow-Land](https://beishanair.github.io/) 的检索体系：
@@ -13,7 +13,7 @@
 ## 目录结构
 
 ```
-Besson-Skill-Mcp-Plugin/
+Besson-Tools/
 ├── README.md                        # 本文件
 ├── LICENSE                          # CC BY-NC-SA 4.0
 ├── skill/                           # ① DSH 技能（SKILL 技能文件，也可作为任何 Agent 的知识库）
@@ -104,6 +104,18 @@ HTTP 模式接入地址：`http://127.0.0.1:3987/mcp`（Streamable HTTP，会话
 ## ③ 作为 DeepSeek Harness（DSH）插件使用（plugin）
 
 > v2.0.0 起同时支持 **DSH 0.1.x（预设目录内 `.agent-presets`）** 与 **0.2.1-rc.2+ 的声明式预设**（profile 内 `cordis.yml` 的 preset 行 + 本地包）。
+
+### 方式 0：插件栏一键安装（推荐，DSH 0.2.1+）
+
+插件已发布为独立 bundle 包仓库（插件栏可识别）：**https://github.com/QZyme/dsh-besson-tools**
+
+1. DSH → 插件栏 → 「添加插件」
+2. 输入 GitHub 仓库地址：
+   `https://github.com/QZyme/dsh-besson-tools`
+   （或本地目录路径、或本包解压目录）
+3. 安装后（bundle 形态）重启或新开会话即可使用 7 个 `besson_tutorial_*` 工具
+
+> 注意：插件栏安装为**全局挂载**（所有会话可用）。若只想在 Besson 预设里使用，请用方式 B（预设行挂载）；两种方式不要同时启用，避免重复注册。
 
 ### 方式 A：整预设安装（自带完整编码 Agent）
 
