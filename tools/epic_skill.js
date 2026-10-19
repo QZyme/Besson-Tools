@@ -1,8 +1,10 @@
 // 把史诗级章节（快速路由/环境矩阵/迁移/工作流/坑点/生态/FAQ/工具链）插入 SKILL.md
 // 保留原 195 条链接表格不动；同步日期自动从 tools/index_data.json 读取。
 import { readFileSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
-const repo = 'C:/Users/12899/Desktop/Besson Skill/Besson-Skill-Mcp-Plugin';
+const repo = join(dirname(fileURLToPath(import.meta.url)), '..');
 const skillPath = repo + '/skill/SKILL.md';
 let md = readFileSync(skillPath, 'utf8');
 const data = JSON.parse(readFileSync(repo + '/tools/index_data.json', 'utf8'));

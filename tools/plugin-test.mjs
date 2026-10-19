@@ -1,7 +1,8 @@
 // 插件 v2.0.0 全工具冒烟测试（模拟 DSH registry）
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
-const repo = 'C:/Users/12899/Desktop/Besson Skill/Besson-Skill-Mcp-Plugin';
+const repo = join(dirname(fileURLToPath(import.meta.url)), '..');
 const mod = await import(pathToFileURL(repo + '/dsh-plugin/besson-tools.mjs').href);
 const registered = new Map();
 const ctx = { tools: { register: (def) => { registered.set(def.name, def); return () => registered.delete(def.name); } } };

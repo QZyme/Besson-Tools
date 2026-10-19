@@ -1,5 +1,5 @@
 // 北山Besson MCP 服务器测试客户端（stdio 传输）
-// 用法：npm install 之后执行 node test-client.mjs
+// 用法：补齐依赖后执行 node test-client.mjs
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { fileURLToPath } from 'node:url';
