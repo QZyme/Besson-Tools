@@ -16,7 +16,7 @@
 Besson-Tools/
 ├── README.md                        # 本文件
 ├── LICENSE                          # CC BY-NC-SA 4.0
-├── skill/                           # ① DSH 技能（SKILL 技能文件，也可作为任何 Agent 的知识库）
+├── skill/                           # ① DSH 技能（SKILL 技能文件，也可作为其他工具的知识库）
 │   ├── SKILL.md                     #    技能主文件：快速路由 + 环境矩阵 + 迁移指南 + 坑点 + FAQ + 195 篇索引
 │   └── references/
 │       └── version-matrix.md        #    版本矩阵（JDK/Loader/构建系统，官方源核实）
@@ -153,7 +153,7 @@ besson-tools.mjs    # ← 来自本包 dsh-plugin/
   name: dsh-besson-tools
 ```
 
-4. 重启 DSH，在会话预设中选择 `besson`。工具注册名会以 `besson_tutorial_*` 出现（0.2.1 的 per-agent 工具作用域）。
+4. 重启 DSH，在会话预设中选择 `besson`。工具注册名会以 `besson_tutorial_*` 出现（0.2.1 的按会话隔离工具作用域）。
 
 ### 方式 C：只给现有预设加工具（0.1.x 旧式预设）
 
