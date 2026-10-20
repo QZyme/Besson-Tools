@@ -266,7 +266,7 @@ async function fetchArticle(url) {
 }
 
 /** 组装 raw ToolDefinition（parameters/output 均为受支持的 JSON Schema 子集） */
-function defineBessonTool(name, description, parameters, execute) {
+export function defineBessonTool(name, description, parameters, execute) {
   return {
     name,
     description,
@@ -282,11 +282,8 @@ function defineBessonTool(name, description, parameters, execute) {
 export const name = 'besson-tutorials-tools';
 export const inject = ['tools'];
 
-export const apply = (ctx) => {
-  const register = (def) => ctx.tools.register(defineBessonTool(def.name, def.description, def.parameters, def.execute));
-
-  // 工具一：章节检索
-  register({
+const TOOL_DEFS = [
+  {
     name: 'besson_tutorial_lookup',
     description:
       '在 BeiShan_Besson（北山Besson）的 Minecraft 模组开发教程站 Tomorrow-Land（https://beishanair.github.io/）中检索教程章节。' +
@@ -320,10 +317,8 @@ export const apply = (ctx) => {
       }
       return { query: q, total: result.total, matched: matches, indexed: INDEX.length, hint: result.hint || '', note: lines.join('\n') };
     },
-  });
-
-  // 工具二：系列总览 + 自描述
-  register({
+  },
+  {
     name: 'besson_tutorial_index',
     description:
       '查看北山Besson 教程站的系列总览：各系列（Fabric/Forge/NeoForge）对应的 MC 版本、Java、章节数量、状态与缺号，' +
@@ -365,10 +360,8 @@ export const apply = (ctx) => {
         },
       };
     },
-  });
-
-  // 工具三：单系列完整章节 / 单章
-  register({
+  },
+  {
     name: 'besson_tutorial_series',
     description:
       '列出北山Besson 教程站某个系列（A-F）的全部章节（含章节号、标题、日期、链接）与系列元信息（Loader、MC 版本、Java、状态、缺号）。' +
@@ -404,10 +397,8 @@ export const apply = (ctx) => {
         })),
       };
     },
-  });
-
-  // 工具四：抓取教程正文
-  register({
+  },
+  {
     name: 'besson_tutorial_fetch',
     description:
       '抓取北山Besson 教程站一篇文章的正文。直接传 url（来自 lookup/series/index 返回的链接）即可抓取；' +
@@ -455,10 +446,8 @@ export const apply = (ctx) => {
         return { error: '抓取失败: ' + ((e && e.message) || e), url: target, version: VERSION };
       }
     },
-  });
-
-  // 工具五：学习路线规划
-  register({
+  },
+  {
     name: 'besson_tutorial_plan',
     description:
       '按目标生成北山Besson 教程站的学习路线：给出系列选择、关键章节顺序（含链接）与环境提示。' +
@@ -499,10 +488,8 @@ export const apply = (ctx) => {
         note: '站点章节列表以实际文章为准；F 系列（NeoForge 26.1）尚未开更',
       };
     },
-  });
-
-  // 工具六：版本 / Loader 对比
-  register({
+  },
+  {
     name: 'besson_tutorial_compare',
     description:
       '对比北山Besson 教程站两个系列（或 MC 版本 / Loader）的工程与 API 差异：Java 版本、构建插件、包名映射、mod 清单文件、入口点、注册方式、事件系统、数据生成。' +
@@ -550,10 +537,8 @@ export const apply = (ctx) => {
         note: 'F 系列（NeoForge 26.1）未开更，26.1 只参照 E（Fabric 26.1）',
       };
     },
-  });
-
-  // 工具七：环境搭建清单
-  register({
+  },
+  {
     name: 'besson_tutorial_env',
     description:
       '生成北山Besson 教程某系列的 Minecraft 模组开发环境搭建清单：JDK 版本与下载、Gradle 工程、模板仓库、启动命令、mod 清单文件与首章链接、常见坑。' +
@@ -621,5 +606,12 @@ export const apply = (ctx) => {
         version: VERSION,
       };
     },
-  });
+  },
+];
+export const TOOLS = Object.fromEntries(TOOL_DEFS.map((d) => [d.name, d]));
+
+export const apply = (ctx) => {
+  for (const def of TOOL_DEFS) {
+    ctx.tools.register(defineBessonTool(def.name, def.description, def.parameters, def.execute));
+  }
 };
