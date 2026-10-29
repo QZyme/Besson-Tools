@@ -14,7 +14,7 @@ metadata:
 >
 > 所有教程均采用 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) 许可
 >
-> **最后与站点同步校验:** 2026-10-19（文章总数 195：章节 190 + 独立文章 4 + 总汇页 1）
+> **最后与站点同步校验:** 2026-10-29（文章总数 207：章节 202 + 独立文章 4 + 总汇页 1）
 
 使用本技能时，用户提到的需求对应到下方具体的教程系列和章节，可以直接输出对应的链接和指引。
 
@@ -26,7 +26,7 @@ metadata:
 |---|---|---|
 | 第一次写模组 / 入门 | **A**（Fabric 1.20.1）或 **C**（Forge 1.20.1），从 #1 起 | 1.20.1 中文资料最全、生态最稳，先跑通再加功能 |
 | 在 1.21.1 上开发 / NeoForge | **D**（NeoForge 1.21.1），从 #1 起（环境搭建在 #3） | NeoForge 是 1.21.1 主流；D#6 网络、D#33 流体等是进阶重点 |
-| 追最新版 26.1 / 26.2 | **E**（Fabric 26.1，已开 8 篇）；**F**（NeoForge 26.1）站内未开 | JDK 25；NeoForge 26.1 官方 2026-03 已适配，可对照官方文档 |
+| 追最新版 26.1 / 26.2 | **E**（Fabric 26.1，已开 20 篇：#1~#8、#22~#33）；**F**（NeoForge 26.1）站内未开 | JDK 25；NeoForge 26.1 官方 2026-03 已适配，可对照官方文档 |
 | 网络包 / 渲染 / 粒子 / GUI 等专题 | **C#39-44 / D#39-44** 对应章节 + 对应系列前 15 章基础 | 专题章依赖注册、事件、数据生成基础 |
 | 从 1.20.1 迁移到 1.21.1 | 先 **A** 前 15 章打底，再转 **D**；重点读各系列「环境/迁移」章 | 见下方迁移指南；包名/事件/注册方式差异最大 |
 | 查具体标题/API 关键词 | 用 `besson_tutorial_lookup`（先搜再做，最多 1-3 条） | 系列字母 + 版本 + 主题词组合检索最准 |
@@ -65,7 +65,7 @@ metadata:
 
 **1.21.1 → 26.1**
 - JDK 21 → 25；构建工具链同步升级（Loom/NeoGradle 版本）。
-- 26.1 处于 API 收缩期，先以 E 系列（Fabric 26.1，8 篇已开）为参照，F 系列开更后以 F 为准。
+- 26.1 处于 API 收缩期，先以 E 系列（Fabric 26.1，20 篇已开：#1~#8、#22~#33）为参照，F 系列开更后以 F 为准。
 - 迁移最稳的路径：保留 1.20.1 项目 → 跑通 A 前 15 章 → 新建 1.21.1 工程（D）复刻 → 再上 26.1。
 
 **章节锚点**：A#51 recipeType、A#52 rei、A#53 网络包、A#54 精炼炉（等级系统）、A#55 罐装机（流体）；B#51 recipeType、B#52 rei、B#53 网络包；D#4 方块/物品注册、D#6 网络、D#33 流体。
@@ -102,7 +102,7 @@ metadata:
 
 ## 🆘 常见问题（FAQ）
 
-- **站点总汇页（/2099/12/31/sum/）列表滞后？** 正常。以实际文章为准（工具 `besson_tutorial_index` 的 dataHealth 校验 190 章）。
+- **站点总汇页（/2099/12/31/sum/）列表滞后？** 正常。以实际文章为准（工具 `besson_tutorial_index` 的 dataHealth 校验 202 章）。
 - **C#22-27、D#13-24 找不到？** 本站未发布，非遗漏。B 无 #54（编号跳号）。F 系列（NeoForge 26.1）尚未开更。
 - **最新版本状态**：MC 26.2（26.1.1/26.1.2 已发，26.3 快照中）；Fabric Loader 0.19.3；NeoForge 26.1 于 2026-03 适配。
 - **工具返回空？** 先跑 `besson_tutorial_index` 看 dataHealth：totalChapters=190 且中文正常 = 数据正常；0 或乱码 = 文件编码损坏，重新安装技能包。
@@ -130,11 +130,11 @@ metadata:
 | B | [Fabric 长线教程计划](#b-fabric-121x) | 1.21.X | Fabric | #1~#56 | ✅ 完整 |
 | C | [Forge 长线教程计划](#c-forge-1201) | 1.20.1 | Forge | #1~#21、#28~#44 | 🚧 进行中 |
 | D | [NeoForge 长线教程计划](#d-neoforge-1211) | 1.21.1 | NeoForge | #1~#12、#25~#44 | 🚧 进行中 |
-| E | [Fabric 教程计划](#e-fabric-261) | 26.1 | Fabric | #1~#8 | 🆕 新开 |
+| E | [Fabric 教程计划](#e-fabric-261) | 26.1 | Fabric | #1~#8、#22~#33 | 🆕 新开 |
 | F | [NeoForge 教程计划](#f-neoforge-261) | 26.1 | NeoForge | — | ⏳ 待开 |
 
 > ⚠️ **章节编号有跳号：** 站点按章节号编号，但存在未发布的空缺章节
-> （Forge 1.20.1 缺 #22~#27；NeoForge 1.21.1 缺 #13~#24；Fabric 1.21.X 本站无 #54）。
+> （Forge 1.20.1 缺 #22~#27；NeoForge 1.21.1 缺 #13~#24；Fabric 1.21.X 本站无 #54；Fabric 26.1（E）缺 #9~#21）。
 > 如用户提到的章节号落在空缺区间，说明该章节尚未发布，建议推荐相邻章节或提示等待更新。
 
 ### 🌐 社区对照与版本现状（2026-10-03 官方源核实）
@@ -161,7 +161,7 @@ metadata:
 | 用户目标 | 推荐系列 | 说明 |
 |----------|----------|------|
 | 完整跟一遍、最稳定 | **B** Fabric 1.21.X（56 章） | 唯一标“完整”的系列 |
-| 最新版本 | **E** Fabric 26.1（8 章） | Java 25，内容最少但最新 |
+| 最新版本 | **E** Fabric 26.1（20 章） | Java 25，内容最新 |
 | 1.20.1 生态 + 深度内容 | **A** Fabric 1.20.1（55 章） | 含网络包/机器等进阶章节 |
 | NeoForge 路线 | **D** NeoForge 1.21.1（32 章） | 1.21.1 是目前 NeoForge 主流 |
 | Forge 路线 | **C** Forge 1.20.1 | 注意 #22~#27 缺失 |
@@ -403,7 +403,7 @@ metadata:
 
 ## E — Fabric 26.1 教程计划
 
-**Loader:** Fabric · **MC 版本:** 26.1（自 26.1 起 Minecraft 使用 **Java 25**）· **章节:** #1~#8
+**Loader:** Fabric · **MC 版本:** 26.1（自 26.1 起 Minecraft 使用 **Java 25**）· **章节:** #1~#8、#22~#33（缺 #9~#21）
 
 | # | 标题 | 链接 |
 |---|------|------|
@@ -415,6 +415,18 @@ metadata:
 | 6 | 配方 | [→](https://beishanair.github.io/2026/06/29/fa261/recipe/) |
 | 7 | 数据生成 | [→](https://beishanair.github.io/2026/06/29/fa261/datagen/) |
 | 8 | 食物 | [→](https://beishanair.github.io/2026/06/29/fa261/food/) |
+| 22 | 自定义交易 | [→](https://beishanair.github.io/2026/10/26/fa261/22trade/) |
+| 23 | 自定义村民 | [→](https://beishanair.github.io/2026/10/27/fa261/23villager/) |
+| 24 | 自定义声音 | [→](https://beishanair.github.io/2026/10/27/fa261/24sound/) |
+| 25 | 音乐唱片 | [→](https://beishanair.github.io/2026/10/27/fa261/25musicdisc/) |
+| 26 | Blockbench模型 | [→](https://beishanair.github.io/2026/10/27/fa261/26blockbench/) |
+| 27 | 方块朝向 | [→](https://beishanair.github.io/2026/10/27/fa261/27facing/) |
+| 28 | 沙发类方块 | [→](https://beishanair.github.io/2026/10/27/fa261/28sofa/) |
+| 29 | 座椅 | [→](https://beishanair.github.io/2026/10/27/fa261/29seat/) |
+| 30 | 光源方块 | [→](https://beishanair.github.io/2026/10/27/fa261/30light/) |
+| 31 | 床 | [→](https://beishanair.github.io/2026/10/27/fa261/31bed/) |
+| 32 | 柱类方块 | [→](https://beishanair.github.io/2026/10/27/fa261/32pillar/) |
+| 33 | 栅栏类方块 | [→](https://beishanair.github.io/2026/10/27/fa261/33fence/) |
 
 ---
 

@@ -6,8 +6,8 @@
 [![site](https://img.shields.io/badge/site-Tomorrow--Land-0078d7)](https://beishanair.github.io/)
 
 > 北山Besson（BeiShan_Besson）Minecraft 模组开发教程站 [Tomorrow-Land](https://beishanair.github.io/) 的检索体系：
-> **DSH 技能（skill）· MCP 服务器（mcp）· DSH 插件（plugin）** 三件套（v2.0.0，适配 DeepSeek Harness 0.2.1-rc.2+）
-> 数据同步日期：**2026-10-19**（站点文章 195 篇全覆盖：章节 190 + 独立文章 4 + 总汇页 1）
+> **DSH 技能（skill）· MCP 服务器（mcp）· DSH 插件（plugin）** 三件套（v2.1.0，适配 DeepSeek Harness 0.2.1-rc.2+）
+> 数据同步日期：**2026-10-29**（站点文章 207 篇全覆盖：章节 202 + 独立文章 4 + 总汇页 1）
 > 站点：https://beishanair.github.io/ · 作者 B站：[@北山Besson](https://space.bilibili.com/489671468) · GitHub：[BeiShanair](https://github.com/BeiShanair)
 
 ## 目录结构
@@ -17,7 +17,7 @@ Besson-Tools/
 ├── README.md                        # 本文件
 ├── LICENSE                          # CC BY-NC-SA 4.0
 ├── skill/                           # ① DSH 技能（SKILL 技能文件，也可作为其他工具的知识库）
-│   ├── SKILL.md                     #    技能主文件：快速路由 + 环境矩阵 + 迁移指南 + 坑点 + FAQ + 195 篇索引
+│   ├── SKILL.md                     #    技能主文件：快速路由 + 环境矩阵 + 迁移指南 + 坑点 + FAQ + 207 篇索引
 │   └── references/
 │       └── version-matrix.md        #    版本矩阵（JDK/Loader/构建系统，官方源核实）
 ├── mcp/                             # ② MCP 服务器（任何支持 MCP 的客户端都能用）
@@ -33,7 +33,7 @@ Besson-Tools/
 └── tools/
     ├── index_data.json              # 教程索引数据（脚本与 MCP 服务器共用）
     ├── sync-data.mjs                # 站点数据更新脚本（重新生成 index_data.json / besson-tools.mjs）
-    ├── epic_skill.js                # 技能史诗化脚本（把增强章节注入 SKILL.md，保留 195 条链接）
+    ├── epic_skill.js                # 技能史诗化脚本（把增强章节注入 SKILL.md，保留 207 条链接）
     └── plugin-test.mjs              # 插件全工具冒烟测试（模拟 DSH registry）
 ```
 
@@ -54,9 +54,9 @@ v2.0.0 技能内容（史诗级）：
 - **版本环境矩阵**：MC 版本 × Loader × JDK × 构建插件 × mod 清单 × 注册/事件方式
 - **迁移指南**：Forge→NeoForge、1.20.1→1.21.1、1.21.1→26.1 的包名/清单/构建/注册差异
 - **标准工作流 + 高频坑点 Top 10 + 生态速查 + FAQ + 7 工具用法**
-- 保留完整 195 篇文章索引（A-F 六系列 + 4 篇独立文章 + 总汇页）
+- 保留完整 207 篇文章索引（A-F 六系列 + 4 篇独立文章 + 总汇页）
 
-使用效果：加载后直接掌握教程站全部 195 篇文章的索引，能按"版本 + 主题"给出教程链接、
+使用效果：加载后直接掌握教程站全部 207 篇文章的索引，能按"版本 + 主题"给出教程链接、
 按目标生成学习路线、对比不同版本工程差异、生成环境搭建清单，并抓取文章正文。
 
 ## ② 作为 MCP 服务器使用（mcp）
@@ -186,7 +186,7 @@ node tools/epic_skill.js          # 重新生成技能史诗章节（保留链�
 ```
 
 脚本会自动抓取站点归档页/标签页，重建完整索引并注入插件模块。技能文件 `skill/SKILL.md`
-的 195 条链接表格保持不变，史诗章节由 `epic_skill.js` 注入。
+的 207 条链接表格保持不变，史诗章节由 `epic_skill.js` 注入。
 
 ## 故障排查（插件"检索不到内容/返回 0 条"）
 
@@ -207,11 +207,12 @@ node tools/epic_skill.js          # 重新生成技能史诗章节（保留链�
 - 站点「教程总汇」页部分章节列表滞后，**以实际文章为准**
 - 章节编号存在空缺：Forge C 缺 #22~#27；NeoForge D 缺 #13~#24；Fabric B 无 #54
 - D39「矿物的世界生成」站点标题误标 1.20.1，实为 1.21.1
-- F 系列（NeoForge 26.1）站内尚未开更（Fabric 26.1 的 E 系列已开 8 篇）
+- F 系列（NeoForge 26.1）站内尚未开更（Fabric 26.1 的 E 系列已开 20 篇：#1~#8、#22~#33）
 - 最新版本：MC 26.2（26.1.1/26.1.2 已发）；Fabric Loader 0.19.3；NeoForge 26.1 于 2026-03 适配
 
 ## 版本历史
 
+- **v2.1.0**：站点数据同步 2026-10-29（站点 207 篇）—— E 系列（Fabric 26.1）新增 #22~#33 共 12 章；数据、版本号全面对齐
 - **v2.0.0**：史诗级增强 —— 插件与 MCP 各 7 工具（新增 plan/compare/env）；技能新增快速路由、环境矩阵、迁移指南、坑点 Top 10、FAQ、工具链；适配 DSH 0.2.1-rc.2（声明式预设 + 本地包挂载 + skill-filesystem 技能目录）；数据同步 2026-10-19（195 篇）
 - **v1.1.1**：版本号统一、数据同步 2026-10-03
 - **v1.1.0**：MCP/插件新增 `besson_tutorial_fetch` 正文抓取

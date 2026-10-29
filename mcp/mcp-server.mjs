@@ -1,4 +1,4 @@
-// 北山Besson 教程检索 MCP 服务器（v2.0.0 · 适配 DeepSeek Harness 0.2.1）
+// 北山Besson 教程检索 MCP 服务器（v2.1.0 · 适配 DeepSeek Harness 0.2.1）
 // 用法：
 //   stdio（默认）: node mcp-server.mjs
 //   HTTP        : node mcp-server.mjs --http   （环境变量 PORT，默认 3987）
@@ -15,7 +15,7 @@ import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const VERSION = '2.0.0';
+const VERSION = '2.1.0';
 
 // ── 数据加载 ──────────────────────────────────────────────────────────────
 function loadData() {
@@ -270,7 +270,7 @@ server.registerTool('besson_tutorial_index', {
   description: '查看教程站六大系列总览：MC 版本、Java、章节数量、状态与缺号，独立文章、教程总汇页、生态现状（当前 MC 26.2、Fabric Loader 0.19.3）与工具清单。不需要参数，直接调用。',
   inputSchema: {},
 }, async () => text({
-  site: DATA.site, author: DATA.author, synced: DATA.synced, version: VERSION, totalArticlesOnSite: 195,
+  site: DATA.site, author: DATA.author, synced: DATA.synced, version: VERSION, totalArticlesOnSite: 207,
   series: DATA.series.map((s) => seriesMeta(s.id)),
   standalones: DATA.standalones,
   dataHealth: {

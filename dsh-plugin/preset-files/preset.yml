@@ -1,2 +1,2 @@
 name: Besson 教程助手
-description: 功能完整的编码环境（基于 standard），并内置北山Besson（BeiShan_Besson）Minecraft 模组开发教程检索工具：besson_tutorial_lookup（关键词检索章节）、besson_tutorial_index（系列总览）、besson_tutorial_series（单系列全章节）、besson_tutorial_fetch（抓正文）、besson_tutorial_plan（学习路线）、besson_tutorial_compare（版本对比）、besson_tutorial_env（环境清单）。数据与 https://beishanair.github.io/ 同步（2026-10-19，195 篇文章全覆盖）。
+description: 功能完整的编码环境（基于 standard），并内置北山Besson（BeiShan_Besson）Minecraft 模组开发教程检索工具：besson_tutorial_lookup（关键词检索章节）、besson_tutorial_index（系列总览）、besson_tutorial_series（单系列全章节）、besson_tutorial_fetch（抓正文）、besson_tutorial_plan（学习路线）、besson_tutorial_compare（版本对比）、besson_tutorial_env（环境清单）。数据与 https://beishanair.github.io/ 同步（2026-10-29，207 篇文章全覆盖）。

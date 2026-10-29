@@ -21,7 +21,7 @@ const check = (cond, label) => { console.log((cond ? 'PASS' : 'FAIL') + ' ' + la
 const look = await call('besson_tutorial_lookup', { query: '附魔', limit: 3 });
 check(look.total >= 1, 'lookup total=' + look.total);
 const idx = await call('besson_tutorial_index', {});
-check(idx.dataHealth.totalChapters === 190, 'index dataHealth=' + idx.dataHealth.totalChapters);
+check(idx.dataHealth.totalChapters === 202, 'index dataHealth=' + idx.dataHealth.totalChapters);
 const ser = await call('besson_tutorial_series', { series: 'D' });
 check(ser.meta.id === 'D' && ser.chapters.length === 32, 'series D len=' + ser.chapters.length);
 const one = await call('besson_tutorial_series', { series: 'D', chapter: '44' });

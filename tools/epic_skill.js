@@ -1,5 +1,5 @@
 // 把史诗级章节（快速路由/环境矩阵/迁移/工作流/坑点/生态/FAQ/工具链）插入 SKILL.md
-// 保留原 195 条链接表格不动；同步日期自动从 tools/index_data.json 读取。
+// 保留原文章链接表格不动（207 篇）；文章数/同步日期自动从 tools/index_data.json 计算。
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -8,7 +8,10 @@ const repo = join(dirname(fileURLToPath(import.meta.url)), '..');
 const skillPath = repo + '/skill/SKILL.md';
 let md = readFileSync(skillPath, 'utf8');
 const data = JSON.parse(readFileSync(repo + '/tools/index_data.json', 'utf8'));
-const synced = data.synced || '2026-10-19';
+const synced = data.synced || '2026-10-29';
+const CH = data.series.reduce((n, s) => n + (s.chapters || []).length, 0);
+const SA = (data.standalones || []).length;
+const TOTAL = CH + SA + 1;
 
 const EPIC = `
 ## 🎯 快速路由（先定位，再动手）
@@ -17,7 +20,7 @@ const EPIC = `
 |---|---|---|
 | 第一次写模组 / 入门 | **A**（Fabric 1.20.1）或 **C**（Forge 1.20.1），从 #1 起 | 1.20.1 中文资料最全、生态最稳，先跑通再加功能 |
 | 在 1.21.1 上开发 / NeoForge | **D**（NeoForge 1.21.1），从 #1 起（环境搭建在 #3） | NeoForge 是 1.21.1 主流；D#6 网络、D#33 流体等是进阶重点 |
-| 追最新版 26.1 / 26.2 | **E**（Fabric 26.1，已开 8 篇）；**F**（NeoForge 26.1）站内未开 | JDK 25；NeoForge 26.1 官方 2026-03 已适配，可对照官方文档 |
+| 追最新版 26.1 / 26.2 | **E**（Fabric 26.1，已开 20 篇：#1~#8、#22~#33）；**F**（NeoForge 26.1）站内未开 | JDK 25；NeoForge 26.1 官方 2026-03 已适配，可对照官方文档 |
 | 网络包 / 渲染 / 粒子 / GUI 等专题 | **C#39-44 / D#39-44** 对应章节 + 对应系列前 15 章基础 | 专题章依赖注册、事件、数据生成基础 |
 | 从 1.20.1 迁移到 1.21.1 | 先 **A** 前 15 章打底，再转 **D**；重点读各系列「环境/迁移」章 | 见下方迁移指南；包名/事件/注册方式差异最大 |
 | 查具体标题/API 关键词 | 用 \`besson_tutorial_lookup\`（先搜再做，最多 1-3 条） | 系列字母 + 版本 + 主题词组合检索最准 |
@@ -56,7 +59,7 @@ const EPIC = `
 
 **1.21.1 → 26.1**
 - JDK 21 → 25；构建工具链同步升级（Loom/NeoGradle 版本）。
-- 26.1 处于 API 收缩期，先以 E 系列（Fabric 26.1，8 篇已开）为参照，F 系列开更后以 F 为准。
+- 26.1 处于 API 收缩期，先以 E 系列（Fabric 26.1，20 篇已开：#1~#8、#22~#33）为参照，F 系列开更后以 F 为准。
 - 迁移最稳的路径：保留 1.20.1 项目 → 跑通 A 前 15 章 → 新建 1.21.1 工程（D）复刻 → 再上 26.1。
 
 **章节锚点**：A#51 recipeType、A#52 rei、A#53 网络包、A#54 精炼炉（等级系统）、A#55 罐装机（流体）；B#51 recipeType、B#52 rei、B#53 网络包；D#4 方块/物品注册、D#6 网络、D#33 流体。
@@ -122,8 +125,8 @@ if (idx < 0) throw new Error('未找到系列总览标题，无法插入');
 md = md.slice(0, idx) + EPIC.trim() + '\n\n' + md.slice(idx);
 
 // 2) 更新同步日期与总数
-md = md.replace(/最后与站点同步校验:\*\*\s*\d{4}-\d{2}-\d{2}（文章总数 195）/,
-  `最后与站点同步校验:** ${synced}（文章总数 195：章节 190 + 独立文章 4 + 总汇页 1）`);
+md = md.replace(/最后与站点同步校验:\*\*\s*\d{4}-\d{2}-\d{2}（文章总数 \d+）/,
+  `最后与站点同步校验:** ${synced}（文章总数 ${TOTAL}：章节 ${CH} + 独立文章 ${SA} + 总汇页 1）`);
 
 // 3) 扩展 description（若尚未包含史诗能力描述）
 if (!md.includes('版本矩阵')) {

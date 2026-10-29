@@ -1,7 +1,7 @@
 {
  "site": "https://beishanair.github.io/",
  "author": "BeiShan_Besson",
- "synced": "2026-10-19",
+ "synced": "2026-10-29",
  "series": [
   {
    "id": "A",
@@ -995,6 +995,66 @@
      "n": "8",
      "title": "食物",
      "url": "https://beishanair.github.io/2026/06/29/fa261/food/"
+    },
+    {
+     "n": "22",
+     "title": "自定义交易",
+     "url": "https://beishanair.github.io/2026/10/26/fa261/22trade/"
+    },
+    {
+     "n": "23",
+     "title": "自定义村民",
+     "url": "https://beishanair.github.io/2026/10/27/fa261/23villager/"
+    },
+    {
+     "n": "24",
+     "title": "自定义声音",
+     "url": "https://beishanair.github.io/2026/10/27/fa261/24sound/"
+    },
+    {
+     "n": "25",
+     "title": "音乐唱片",
+     "url": "https://beishanair.github.io/2026/10/27/fa261/25musicdisc/"
+    },
+    {
+     "n": "26",
+     "title": "Blockbench模型",
+     "url": "https://beishanair.github.io/2026/10/27/fa261/26blockbench/"
+    },
+    {
+     "n": "27",
+     "title": "方块朝向",
+     "url": "https://beishanair.github.io/2026/10/27/fa261/27facing/"
+    },
+    {
+     "n": "28",
+     "title": "沙发类方块",
+     "url": "https://beishanair.github.io/2026/10/27/fa261/28sofa/"
+    },
+    {
+     "n": "29",
+     "title": "座椅",
+     "url": "https://beishanair.github.io/2026/10/27/fa261/29seat/"
+    },
+    {
+     "n": "30",
+     "title": "光源方块",
+     "url": "https://beishanair.github.io/2026/10/27/fa261/30light/"
+    },
+    {
+     "n": "31",
+     "title": "床",
+     "url": "https://beishanair.github.io/2026/10/27/fa261/31bed/"
+    },
+    {
+     "n": "32",
+     "title": "柱类方块",
+     "url": "https://beishanair.github.io/2026/10/27/fa261/32pillar/"
+    },
+    {
+     "n": "33",
+     "title": "栅栏类方块",
+     "url": "https://beishanair.github.io/2026/10/27/fa261/33fence/"
     }
    ]
   },
