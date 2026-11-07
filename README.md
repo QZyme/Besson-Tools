@@ -6,8 +6,8 @@
 [![site](https://img.shields.io/badge/site-Tomorrow--Land-0078d7)](https://beishanair.github.io/)
 
 > 北山Besson（BeiShan_Besson）Minecraft 模组开发教程站 [Tomorrow-Land](https://beishanair.github.io/) 的检索体系：
-> **DSH 技能（skill）· MCP 服务器（mcp）· DSH 插件（plugin）** 三件套（v2.1.0，适配 DeepSeek Harness 0.2.1-rc.2+）
-> 数据同步日期：**2026-10-29**（站点文章 207 篇全覆盖：章节 202 + 独立文章 4 + 总汇页 1）
+> **DSH 技能（skill）· MCP 服务器（mcp）· DSH 插件（plugin）** 三件套（v2.2.0，适配 DeepSeek Harness 0.2.2-rc.1+）
+> 数据同步日期：**2026-11-07**（站点文章 217 篇全覆盖：章节 212 + 独立文章 4 + 总汇页 1）
 > 站点：https://beishanair.github.io/ · 作者 B站：[@北山Besson](https://space.bilibili.com/489671468) · GitHub：[BeiShanair](https://github.com/BeiShanair)
 
 ## 目录结构
@@ -39,7 +39,7 @@ Besson-Tools/
 
 ## ① 作为 DSH 技能使用（skill）
 
-> 适用 DSH 0.2.1-rc.2+（技能发现根：用户级 `~/.dsh/skills/`、项目级 `<workspace>/.dsh/skills/`）
+> 适用 DSH 0.2.2-rc.1+（技能发现根：用户级 `~/.dsh/skills/`、项目级 `<workspace>/.dsh/skills/`）
 
 ```bash
 # 把 skill/ 安装到用户级技能目录（推荐，DSH 会自动发现）
@@ -102,7 +102,7 @@ HTTP 模式接入地址：`http://127.0.0.1:3987/mcp`（Streamable HTTP，会话
 
 ## ③ 作为 DeepSeek Harness（DSH）插件使用（plugin）
 
-> v2.0.0 起同时支持 **DSH 0.1.x（预设目录内 `.agent-presets`）** 与 **0.2.1-rc.2+ 的声明式预设**（profile 内 `cordis.yml` 的 preset 行 + 本地包）。
+> v2.0.0 起同时支持 **DSH 0.1.x（预设目录内 `.agent-presets`）** 与 **0.2.2-rc.1+ 的声明式预设**（profile 内 `cordis.yml` 的 preset 行 + 本地包）。
 
 ### 方式 0：插件栏一键安装（推荐，DSH 0.2.1+）
 
@@ -207,11 +207,12 @@ node tools/epic_skill.js          # 重新生成技能史诗章节（保留链�
 - 站点「教程总汇」页部分章节列表滞后，**以实际文章为准**
 - 章节编号存在空缺：Forge C 缺 #22~#27；NeoForge D 缺 #13~#24；Fabric B 无 #54
 - D39「矿物的世界生成」站点标题误标 1.20.1，实为 1.21.1
-- F 系列（NeoForge 26.1）站内尚未开更（Fabric 26.1 的 E 系列已开 20 篇：#1~#8、#22~#33）
+- F 系列（NeoForge 26.1）站内尚未开更（Fabric 26.1 的 E 系列已开 30 篇：#1~#8、#22~#43）
 - 最新版本：MC 26.2（26.1.1/26.1.2 已发）；Fabric Loader 0.19.3；NeoForge 26.1 于 2026-03 适配
 
 ## 版本历史
 
+- **v2.2.0**：站点数据同步 2026-11-07（站点 217 篇）—— E 系列（Fabric 26.1）新增 #34~#43 共 10 章（流体/木头/树/世界生成/花/矿物/结构/生物群系/维度）；版本号 2.2.0，适配 DSH 0.2.2-rc.1
 - **v2.1.0**：站点数据同步 2026-10-29（站点 207 篇）—— E 系列（Fabric 26.1）新增 #22~#33 共 12 章；数据、版本号全面对齐
 - **v2.0.0**：史诗级增强 —— 插件与 MCP 各 7 工具（新增 plan/compare/env）；技能新增快速路由、环境矩阵、迁移指南、坑点 Top 10、FAQ、工具链；适配 DSH 0.2.1-rc.2（声明式预设 + 本地包挂载 + skill-filesystem 技能目录）；数据同步 2026-10-19（195 篇）
 - **v1.1.1**：版本号统一、数据同步 2026-10-03

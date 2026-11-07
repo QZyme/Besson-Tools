@@ -1,7 +1,7 @@
 {
  "site": "https://beishanair.github.io/",
  "author": "BeiShan_Besson",
- "synced": "2026-10-29",
+ "synced": "2026-11-07",
  "series": [
   {
    "id": "A",
@@ -1055,6 +1055,56 @@
      "n": "33",
      "title": "栅栏类方块",
      "url": "https://beishanair.github.io/2026/10/27/fa261/33fence/"
+    },
+    {
+     "n": "34",
+     "title": "流体",
+     "url": "https://beishanair.github.io/2026/11/02/fa261/34fluid/"
+    },
+    {
+     "n": "35",
+     "title": "木头",
+     "url": "https://beishanair.github.io/2026/11/02/fa261/35wood/"
+    },
+    {
+     "n": "36",
+     "title": "树",
+     "url": "https://beishanair.github.io/2026/11/02/fa261/36tree/"
+    },
+    {
+     "n": "37",
+     "title": "树的世界生成",
+     "url": "https://beishanair.github.io/2026/11/02/fa261/37treegen/"
+    },
+    {
+     "n": "38",
+     "title": "花 & 盆栽花",
+     "url": "https://beishanair.github.io/2026/11/02/fa261/38flower/"
+    },
+    {
+     "n": "39",
+     "title": "花的世界生成",
+     "url": "https://beishanair.github.io/2026/11/02/fa261/39flowergen/"
+    },
+    {
+     "n": "40",
+     "title": "矿物的世界生成",
+     "url": "https://beishanair.github.io/2026/11/02/fa261/40oregen/"
+    },
+    {
+     "n": "41",
+     "title": "结构",
+     "url": "https://beishanair.github.io/2026/11/02/fa261/41structure/"
+    },
+    {
+     "n": "42",
+     "title": "生物群系",
+     "url": "https://beishanair.github.io/2026/11/02/fa261/42biome/"
+    },
+    {
+     "n": "43",
+     "title": "维度 & 传送门",
+     "url": "https://beishanair.github.io/2026/11/02/fa261/43dimension/"
     }
    ]
   },
