@@ -10,7 +10,7 @@ const DATA = {"site":"https://beishanair.github.io/","author":"BeiShan_Besson","
 
 const JAVA = { A: 'Java 17', B: 'Java 21', C: 'Java 17', D: 'Java 21', E: 'Java 25', F: 'Java 25' };
 const GAPS = { A: [], B: ['54（本站无 #54）'], C: ['22-27（未发布）'], D: ['13-24（未发布）'], E: [], F: ['全系列待开'] };
-const VERSION = '2.4.2';
+const VERSION = '2.4.3';
 
 // 系列画像：compare / env / plan 共用。只写有把握的定性事实，不写易过期的精确小版本号。
 const SERIES_INFO = {

@@ -1,7 +1,7 @@
 {
   "name": "besson-tutorials-mcp",
-  "version": "2.4.2",
-  "description": "北山Besson（BeiShan_Besson）Minecraft 模组开发教程检索 MCP 服务器（7 工具：lookup / index / series / fetch / plan / compare / env），适配 DeepSeek Harness 0.2.2-rc.1+ 与其他 MCP 客户端（数据：217 篇，2026-11-07）",
+  "version": "2.4.3",
+  "description": "北山Besson 模组开发教程 MCP 服务器：11 个工具检索 217 篇教程文章、规划学习路线、对比版本环境差异、抓取文章正文、工程体检、迁移清单、骨架生成与中文映射（DSH 0.2.2-rc.3+，数据同步 2026-11-07）。",
   "type": "module",
   "bin": {
     "besson-tutorials-mcp": "./mcp-server.mjs"
