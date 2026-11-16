@@ -158,6 +158,8 @@ besson-tools.mjs    # ← 来自本包 dsh-plugin/
 
 4. 重启 DSH，在会话预设中选择 `besson`。工具注册名会以 `besson_tutorial_*` 出现（0.2.1 的按会话隔离工具作用域）。
 
+> 改完 profile 的 `cordis.patch.yml` 后，先跑 `node dsh-plugin/preset-files/check-preset.mjs` 做结构自检（检测同层重复键，避免启动时 `YAMLException: duplicated mapping key`）。
+
 ### 方式 C：只给现有预设加工具（0.1.x 旧式预设）
 
 1. 把 `besson-tools.mjs` 复制到你的预设目录（与 `agent.cordis.yml` 同级）
