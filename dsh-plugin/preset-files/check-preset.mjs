@@ -45,6 +45,18 @@ for (let i = 0; i < lines.length; i++) {
   check(indent, kv[1].replace(/^['"]|['"]$/g, ''), ln);
 }
 
+// DSH 0.2.2 只注册 provider / model 两个 prompt 变量；其他 {{...}} 会在装配系统提示词时抛
+// "unknown prompt variable"。这里顺带拦住 {{cwd}} 之类的旧模板变量。
+const ALLOWED_VARS = new Set(['provider', 'model']);
+for (let i = 0; i < lines.length; i++) {
+  const raw = lines[i].trim();
+  if (raw.startsWith('#')) continue;
+  for (const m of lines[i].matchAll(/\{\{\s*([A-Za-z0-9_-]+)\s*\}\}/g)) {
+    if (!ALLOWED_VARS.has(m[1])) {
+      problems.push(`L${i + 1}: 未注册的 prompt 变量 "{{${m[1]}}}"（DSH 0.2.2 仅注册 provider / model；工作目录请用 runtime context）`);
+    }
+  }
+}
 if (problems.length) {
   console.error('❌ YAML 结构检查失败：');
   for (const p of problems) console.error('  ' + p);
