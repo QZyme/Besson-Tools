@@ -10,6 +10,7 @@
       var PANEL_ID = 'besson-moddev'
       var STATS_URL = 'https://raw.githubusercontent.com/QZyme/dsh-besson-tools/main/lib/data/stats.json'
       var STATS_URL_CDN = 'https://cdn.jsdelivr.net/gh/QZyme/dsh-besson-tools@main/lib/data/stats.json'
+      var USAGE_URL = (function () { try { return new URL('api/dsh-besson-tools/usage', document.baseURI).toString() } catch (e) { return 'api/dsh-besson-tools/usage' } })()
 
       var COLORS = {
         text: 'var(--dsw-alias-text-primary, #1f2329)',
@@ -100,6 +101,20 @@
         React.useEffect(function () { load() }, [load])
         return [s.data, s.loading, s.live, s.error, load]
       }
+      function useUsage() {
+        var st = React.useState({ data: null, loading: true, err: '' })
+        var s = st[0], set = st[1]
+        var loadU = React.useCallback(function () {
+          set(function (p) { return Object.assign({}, p, { loading: true, err: '' }) })
+          fetch(USAGE_URL, { cache: 'no-store' })
+            .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json() })
+            .then(function (j) { set({ data: j, loading: false, err: '' }) })
+            .catch(function () { set({ data: null, loading: false, err: '统计端点不可达：重启 DSH 后生效（先调用一次 besson_* 工具产生数据）' }) })
+        }, [])
+        React.useEffect(function () { loadU() }, [loadU])
+        return [s.data, s.loading, s.err, loadU]
+      }
+
 
       function BarChart(props) {
         var max = Math.max.apply(null, props.items.map(function (x) { return x.chapters })) || 1
@@ -118,6 +133,8 @@
         var age = daysSince(data.synced)
         var ageText = age === null ? '未知' : age === 0 ? '今天' : age + ' 天前'
         var seriesSum = (data.series || []).reduce(function (n, x) { return n + (x.chapters || 0) }, 0)
+        var u = useUsage()
+        var ud = u[0], uLoading = u[1], uErr = u[2], uReload = u[3]
 
         return h('div', { style: S.page },
           h('div', { style: S.h1 }, '北山 Besson 模组开发助手'),
@@ -146,6 +163,28 @@
             )
           ),
 
+
+          h('div', { style: S.card },
+            h('div', { style: S.h2 }, '工具调用统计（本机）',
+              h('button', { style: S.btn, onClick: uReload, disabled: uLoading }, uLoading ? '读取中…' : '刷新')),
+            ud ? h('div', null,
+              h('table', { style: S.table },
+                h('thead', null, h('tr', null, h('th', { style: S.th }, '工具'), h('th', { style: S.th }, '调用次数'), h('th', { style: S.th }, '平均耗时'), h('th', { style: S.th }, '失败'), h('th', { style: S.th }, '最近使用'))),
+                h('tbody', null, (ud.tools || []).map(function (t) {
+                  return h('tr', { key: t.name },
+                    h('td', { style: S.tdName }, t.name),
+                    h('td', { style: S.td }, String(t.calls)),
+                    h('td', { style: Object.assign({}, S.td, S.small) }, t.avgMs + ' ms'),
+                    h('td', { style: Object.assign({}, S.td, S.small) }, t.errors ? String(t.errors) : '—'),
+                    h('td', { style: Object.assign({}, S.td, S.small) }, t.last ? t.last.replace('T', ' ').slice(5, 16) : '—'))
+                }))
+              )
+            ) : null,
+            (ud && (ud.tools || []).length === 0) ? h('div', { style: Object.assign({}, S.small, { marginTop: 6 }) }, '还没有调用记录：在任意会话中使用 besson_* 工具后回到这里刷新。') : null,
+            ud ? h('div', { style: Object.assign({}, S.small, { marginTop: 8 }) },
+              '合计 ' + ud.total.calls + ' 次 · 失败 ' + ud.total.errors + ' 次 · 平均 ' + ud.total.avgMs + ' ms · 数据文件 ~/.dsh/storages/besson-tools/usage.json（本机保存，不联网）')
+              : h('div', { style: S.small }, uErr)
+          ),
           h('div', { style: S.card },
             h('div', { style: S.h2 }, '工具与上下文开销（11 个）'),
             h('table', { style: S.table },
