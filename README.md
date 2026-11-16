@@ -21,12 +21,12 @@ Besson-Tools/
 │   └── references/
 │       └── version-matrix.md        #    版本矩阵（JDK/Loader/构建系统，官方源核实）
 ├── mcp/                             # ② MCP 服务器（任何支持 MCP 的客户端都能用）
-│   ├── mcp-server.mjs               #    stdio（默认）或 HTTP（--http）双模式，9 个工具
+│   ├── mcp-server.mjs               #    stdio（默认）或 HTTP（--http）双模式，11 个工具
 │   ├── test-client.mjs              #    stdio 端到端测试
 │   ├── test-http.mjs                #    HTTP 冒烟测试
 │   └── package.json                 #    依赖清单（Release 的 mcp 包已自带）
 ├── dsh-plugin/                      # ③ DeepSeek Harness（DSH）插件
-│   ├── besson-tools.mjs             #    插件本体（零依赖，注册 9 个工具，v2.3.0）
+│   ├── besson-tools.mjs             #    插件本体（零依赖，注册 11 个工具，v2.3.0）
 │   ├── preset-files/                #    整预设安装时需要的文件
 │   │   └── preset.yml               #    预设元数据（名称/描述）
 │   └── agent.cordis.yml.snippet     #    往现有预设追加插件行时复制此片段
@@ -162,7 +162,7 @@ besson-tools.mjs    # ← 来自本包 dsh-plugin/
 
 1. 把 `besson-tools.mjs` 复制到你的预设目录（与 `agent.cordis.yml` 同级）
 2. 在 `agent.cordis.yml` 末尾追加 `agent.cordis.yml.snippet` 中的内容
-3. 重启会话即可拥有 9 个工具（v2.3.0）
+3. 重启会话即可拥有 9 个工具（v2.4.0）
 
 ### 工具清单（插件与 MCP 完全一致，9 个）
 
@@ -195,7 +195,7 @@ node tools/epic_skill.js          # 重新生成技能史诗章节（保留链�
 
 ## 故障排查（插件"检索不到内容/返回 0 条"）
 
-1. 用仓库 `dsh-plugin/besson-tools.mjs`（或 Release 最新 `besson-plugin-v2.3.0.zip`）
+1. 用仓库 `dsh-plugin/besson-tools.mjs`（或 Release 最新 `besson-plugin-v2.4.0.zip`）
    覆盖安装位置的文件：
    - 0.1.x 旧式预设：`~/.dsh/.agent-presets/<你的预设id>/besson-tools.mjs`
    - 0.2.1+ 本地包：`<本地包目录>/besson-tools.mjs`（profile 内 `dsh.profile.bundles`/dependencies 安装的副本）

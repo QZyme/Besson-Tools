@@ -39,6 +39,15 @@ check(env.series === 'E' && env.jdk === '25', 'env series=' + env.series);
 const empt = await call('besson_tutorial_lookup', { query: '' });
 check(empt.hint === '请输入查询关键词', 'empty query hint=' + JSON.stringify(empt.hint));
 const mig = await call('besson_mod_migrate', { from: 'A', to: 'D' });
+
+const scaf = await call('besson_mod_scaffold', { loader: 'neoforge', mcVersion: '1.21.1', modId: 'mysword', name: 'My Sword' });
+check(scaf && scaf.ok === true && scaf.series === 'D' && Array.isArray(scaf.files) && scaf.files.length === 5, 'scaffold 生成 5 个文件（D 系列）');
+check(scaf.files.some((f) => /mysword\/MyswordMod\.java$/.test(f.path)), 'scaffold 主类路径正确');
+
+const map = await call('besson_mod_mapping', { keyword: '方块实体' });
+check(map && map.ok === true && map.matched >= 1 && map.entries[0].zh.includes('方块实体'), 'mapping 中文命中');
+const mapAll = await call('besson_mod_mapping', {});
+check(mapAll && mapAll.matched >= 20, 'mapping 全表 >= 20 条');
 check(mig.steps.length === 8 && mig.javaSteps === 'Java 17 → Java 21', 'migrate steps=' + mig.steps.length + ' java=' + mig.javaSteps);
 const proj = await call('besson_mod_project', { path: 'C:/Users/12899/AppData/Local/Temp/fixture-neoforge' });
 check(proj.matchedSeries && proj.matchedSeries.id === 'D' && proj.ok === true, 'project matched=' + (proj.matchedSeries && proj.matchedSeries.id));

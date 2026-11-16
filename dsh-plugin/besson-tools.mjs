@@ -1,7 +1,7 @@
-// 北山Besson（BeiShan_Besson）Minecraft 模组开发助手 · DSH 插件（v2.3.0 · 适配 DeepSeek Harness 0.2.2-rc.1）
+// 北山Besson（BeiShan_Besson）Minecraft 模组开发助手 · DSH 插件（v2.4.0 · 适配 DeepSeek Harness 0.2.2-rc.1）
 // 数据与本仓库 skill/SKILL.md 同步（站点 217 篇文章全覆盖：章节 212 + 独立文章 4 + 总汇页 1）。
 // 零依赖：只 import node 内置模块，不依赖任何 npm 包。
-// 9 个工具：lookup / index / series / fetch / plan / compare / env / mod_project / mod_migrate —— 检索、导航、路线规划、版本对比、环境搭建、工程体检、迁移清单。
+// 11 个工具：lookup / index / series / fetch / plan / compare / env / mod_project / mod_migrate / mod_scaffold / mod_mapping —— 检索、导航、路线规划、版本对比、环境搭建、工程体检、迁移清单、骨架生成、中文映射对照。
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -10,7 +10,7 @@ const DATA = {"site":"https://beishanair.github.io/","author":"BeiShan_Besson","
 
 const JAVA = { A: 'Java 17', B: 'Java 21', C: 'Java 17', D: 'Java 21', E: 'Java 25', F: 'Java 25' };
 const GAPS = { A: [], B: ['54（本站无 #54）'], C: ['22-27（未发布）'], D: ['13-24（未发布）'], E: [], F: ['全系列待开'] };
-const VERSION = '2.3.0';
+const VERSION = '2.4.0';
 
 // 系列画像：compare / env / plan 共用。只写有把握的定性事实，不写易过期的精确小版本号。
 const SERIES_INFO = {
@@ -285,6 +285,291 @@ export function defineBessonTool(name, description, parameters, execute) {
 export const name = 'besson-tutorials-tools';
 export const inject = ['tools'];
 
+// ── v2.4.0：骨架生成与中文映射对照（scaffold / mapping 工具共用）──
+const FABRIC_JAVA = { A: '17', B: '21', E: '25' };
+
+function scaffoldTemplates(id) {
+  const jv = FABRIC_JAVA[id] || '21';
+  if (id === 'A' || id === 'B' || id === 'E') {
+    const mc = id === 'A' ? '1.20.1' : id === 'B' ? '1.21.1' : '26.1';
+    const yarn = id === 'A' ? '1.20.1+build.10' : id === 'B' ? '1.21.1+build.3' : '26.1+build.1';
+    const loader = id === 'A' ? '0.16.14' : id === 'B' ? '0.16.14' : '0.19.3';
+    const fapi = id === 'A' ? '0.92.2+1.20.1' : id === 'B' ? '0.116.6+1.21.1' : '0.135.0+1.21.11';
+    return {
+      'gradle.properties': ['minecraft_version=' + mc, 'yarn_mappings=' + yarn, 'loader_version=' + loader, 'fabric_version=' + fapi, 'mod_id=__ID__', 'mod_name=__NAME__', 'mod_version=0.0.1'].join('\n'),
+      'build.gradle': [
+        "plugins { id 'fabric-loom' version '1.7-SNAPSHOT'",
+        "id 'maven-publish' }",
+        '',
+        'version = project.mod_version',
+        'group = project.maven_group',
+        '',
+        'base { archivesName = project.archives_base_name }',
+        '',
+        'repositories { }',
+        '',
+        'dependencies {',
+        '    minecraft "com.mojang:minecraft:${project.minecraft_version}"',
+        '    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"',
+        '    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"',
+        '    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"',
+        '}',
+        '',
+        'processResources {',
+        '    inputs.property "version", project.version',
+        '    filesMatching("fabric.mod.json") { expand "version": project.version }',
+        '}',
+        '',
+        'java {',
+        '    withSourcesJar()',
+        '    sourceCompatibility = JavaVersion.VERSION_' + jv,
+        '    targetCompatibility = JavaVersion.VERSION_' + jv,
+        '}',
+      ].join('\n'),
+      'settings.gradle': [
+        'pluginManagement {',
+        '    repositories {',
+        "        maven { name = 'Fabric'; url = 'https://maven.fabricmc.net/' }",
+        '        gradlePluginPortal()',
+        '    }',
+        '}',
+        '',
+        'rootProject.name = "__ID__"',
+      ].join('\n'),
+      'src/main/java/__GROUPDIR__/__CLASS__.java': [
+        'package __GROUP__;',
+        '',
+        'import net.fabricmc.api.ModInitializer;',
+        'import net.minecraft.registry.Registry;',
+        'import net.minecraft.registry.Registries;',
+        'import net.minecraft.util.Identifier;',
+        'import org.slf4j.Logger;',
+        'import org.slf4j.LoggerFactory;',
+        '',
+        'public class __CLASS__ implements ModInitializer {',
+        '    public static final String MODID = "__ID__";',
+        '    public static final Logger LOGGER = LoggerFactory.getLogger(MODID);',
+        '',
+        '    @Override',
+        '    public void onInitialize() {',
+        '        // 在此注册物品/方块/实体/音效，例如：',
+        '        // Registry.register(Registries.BLOCK, new Identifier(MODID, "example"), ...);',
+        '    }',
+        '}',
+      ].join('\n'),
+      'src/main/resources/fabric.mod.json': [
+        '{',
+        '  "schemaVersion": 1,',
+        '  "id": "__ID__",',
+        '  "version": "0.0.1",',
+        '  "name": "__NAME__",',
+        '  "environment": "*",',
+        '  "entrypoints": { "main": [ "__GROUP__.__CLASS__" ] },',
+        '  "depends": { "fabricloader": ">=0.15", "minecraft": "' + mc + '", "java": ">=' + jv + '", "fabric-api": "*" }',
+        '}',
+      ].join('\n'),
+    };
+  }
+  const tomlPath = id === 'D' ? 'src/main/resources/META-INF/neoforge.mods.toml' : 'src/main/resources/META-INF/mods.toml';
+  const gradleProps = id === 'D'
+    ? ['minecraft_version=1.21.1', 'neo_version=21.1.217', 'mod_id=__ID__', 'mod_name=__NAME__', 'mod_group_id=__GROUP__', 'mod_version=0.0.1', 'org.gradle.jvmargs=-Xmx2G', 'org.gradle.daemon=true'].join('\n')
+    : ['minecraft_version=1.20.1', 'forge_version=47.3.0', 'mod_id=__ID__', 'mod_name=__NAME__', 'mod_version=0.0.1', 'org.gradle.jvmargs=-Xmx2G'].join('\n');
+  const buildGradle = id === 'D'
+    ? [
+        "plugins { id 'java-library'",
+        "id 'net.neoforged.moddev' version '2.0.78' }",
+        '',
+        'java.toolchain.languageVersion = JavaLanguageVersion.of(21)',
+        '',
+        'neoForge {',
+        '    version = project.neo_version',
+        '    parchment {',
+        '        minecraftVersion = project.minecraft_version',
+        "        mappingsVersion = '2024.11.17'",
+        '    }',
+        '    runs {',
+        '        client { client() }',
+        '        server { server() }',
+        '        data { data() }',
+        '    }',
+        '    mods {',
+        '        __ID__ { sourceSet(sourceSets.main) }',
+        '    }',
+        '}',
+        '',
+        'dependencies { }',
+      ].join('\n')
+    : [
+        "plugins { id 'eclipse'",
+        "id 'maven-publish'",
+        "id 'net.minecraftforge.gradle' version '[6.0,6.2)' }",
+        '',
+        'version = project.mod_version',
+        'group = project.maven_group',
+        '',
+        'base { archivesName = project.archives_base_name }',
+        '',
+        'minecraft {',
+        "    mappings channel: 'official', version: project.minecraft_version",
+        '    runs {',
+        '        client { workingDirectory project.file("run") }',
+        '        server { workingDirectory project.file("run") }',
+        '    }',
+        '    mods {',
+        '        __ID__ { source sourceSets.main }',
+        '    }',
+        '}',
+        '',
+        'dependencies {',
+        '    minecraft "net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}"',
+        '}',
+        '',
+        'java { withSourcesJar() }',
+      ].join('\n');
+  const mainJava = id === 'D'
+    ? [
+        'package __GROUP__;',
+        '',
+        'import net.neoforged.bus.api.IEventBus;',
+        'import net.neoforged.fml.common.Mod;',
+        'import net.neoforged.neoforge.registries.DeferredRegister;',
+        'import net.minecraft.world.level.block.Block;',
+        '',
+        '@Mod("__ID__")',
+        'public class __CLASS__ {',
+        '    public static final String MODID = "__ID__";',
+        '    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);',
+        '',
+        '    public __CLASS__(IEventBus modBus) {',
+        '        BLOCKS.register(modBus);',
+        '        // 在此注册物品/方块/实体/音效',
+        '    }',
+        '}',
+      ].join('\n')
+    : [
+        'package __GROUP__;',
+        '',
+        'import net.minecraftforge.eventbus.api.IEventBus;',
+        'import net.minecraftforge.fml.common.Mod;',
+        'import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;',
+        'import net.minecraftforge.registries.DeferredRegister;',
+        'import net.minecraftforge.registries.ForgeRegistries;',
+        'import net.minecraft.world.level.block.Block;',
+        '',
+        '@Mod("__ID__")',
+        'public class __CLASS__ {',
+        '    public static final String MODID = "__ID__";',
+        '    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);',
+        '',
+        '    public __CLASS__() {',
+        '        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();',
+        '        BLOCKS.register(modBus);',
+        '    }',
+        '}',
+      ].join('\n');
+  const toml = [
+    'modLoader="javafml"',
+    'loaderVersion="[' + (id === 'D' ? '1,' : '43,') + ')"',
+    'license="__LICENSE__"',
+    '',
+    '[[mods]]',
+    'modId="__ID__"',
+    'version="__VERSION__"',
+    'displayName="__NAME__"',
+  ].join('\n');
+  return {
+    'gradle.properties': gradleProps,
+    'build.gradle': buildGradle,
+    'settings.gradle': ['rootProject.name = "__ID__"'].join('\n'),
+    'src/main/java/__GROUPDIR__/__CLASS__.java': mainJava,
+    [tomlPath]: toml,
+  };
+}
+
+function scaffoldSeries(loader, mcVersion) {
+  const ld = String(loader || '').toLowerCase();
+  const mc = String(mcVersion || '').trim();
+  if (mc.startsWith('1.20.1')) return ld.includes('forge') && !ld.includes('neo') ? 'C' : 'A';
+  if (mc.startsWith('1.21')) return ld.includes('fabric') ? 'B' : 'D';
+  if (mc.startsWith('26')) return ld.includes('fabric') ? 'E' : 'F';
+  return ld === 'neoforge' ? 'D' : ld === 'forge' ? 'C' : 'A';
+}
+
+// 中文映射对照：概念 ↔ 官方映射名（源自教程与各 loader 公开映射的通用命名）
+const CONCEPT_MAP = [
+  ['注册', 'Registry.register / DeferredRegister', '注册表入口'],
+  ['物品', 'Item', 'net.minecraft.world.item'],
+  ['方块', 'Block', 'net.minecraft.world.level.block'],
+  ['生物实体', 'Entity / Mob', 'net.minecraft.world.entity'],
+  ['方块实体', 'BlockEntity', 'world.level.block.entity'],
+  ['界面', 'Screen / Menu', 'client.gui.screens'],
+  ['配方', 'Recipe / RecipeType', 'world.item.crafting'],
+  ['数据生成', 'DataGenerator', 'datagen'],
+  ['事件', 'Event / @SubscribeEvent', '事件总线'],
+  ['属性', 'Attribute', 'entity.ai.attributes'],
+  ['伤害来源', 'DamageSource', 'world.damage'],
+  ['能力/附件', 'AttachmentType / Capability', 'neoforge attachment / Forge Capability'],
+  ['战利品表', 'LootTable', 'world.level.storage.loot'],
+  ['标签', 'TagKey', 'tags'],
+  ['模型', 'BlockModel / ItemModel', 'client.renderer'],
+  ['渲染器', 'BlockEntityRenderer / EntityRenderer', 'client.renderer'],
+  ['网络包', 'CustomPacketPayload / Packet', 'network'],
+  ['生物群系', 'Biome', 'world.level.biome'],
+  ['维度', 'DimensionType / LevelStem', 'world.level.dimension'],
+  ['结构', 'Structure / StructureType', 'world.level.levelgen.structure'],
+  ['特征', 'Feature', 'level.levelgen.feature'],
+  ['放置', 'PlacementModifier', 'level.levelgen.placement'],
+  ['音效', 'SoundEvent', 'sounds'],
+  ['物品栏', 'CreativeModeTab', 'world.item'],
+  ['附魔', 'Enchantment', 'enchantment'],
+  ['命令', 'Command / CommandDispatcher', 'commands'],
+  ['粒子', 'ParticleType', 'particle'],
+  ['流体', 'Fluid / FlowingFluid', 'world.level.fluid'],
+  ['进度', 'Advancement', 'advancements'],
+  ['刷怪', 'Spawner / EntityType', 'world.entity'],
+  ['Mixin', 'Mixin / @Mixin', 'fabric 客户端/服务端注入'],
+];
+
+function lookupConcept(keyword) {
+  const kw = String(keyword || '').trim().toLowerCase();
+  if (!kw) return CONCEPT_MAP;
+  return CONCEPT_MAP.filter(([zh, a, b]) =>
+    zh.toLowerCase().includes(kw) || String(a).toLowerCase().includes(kw) || String(b).toLowerCase().includes(kw)
+  );
+}
+
+function buildScaffold(args) {
+  const a = args && typeof args === 'object' ? args : {};
+  const loader = String(a.loader || 'neoforge').toLowerCase();
+  const mcVersion = String(a.mcVersion || a.mc || '1.21.1');
+  const id = scaffoldSeries(loader, mcVersion);
+  const modId = String(a.modId || a.modid || 'examplemod').toLowerCase().replace(/[^a-z0-9_]/g, '_');
+  const displayName = String(a.name || modId);
+  const className = modId.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('') + 'Mod';
+  const group = String(a.group || 'com.example.' + modId).replace(/\.$/, '');
+  const groupDir = group.split('.').join('/');
+  const fill = (str) => str
+    .replaceAll('__ID__', modId)
+    .replaceAll('__NAME__', displayName)
+    .replaceAll('__CLASS__', className)
+    .replaceAll('__GROUP__', group)
+    .replaceAll('__GROUPDIR__', groupDir)
+    .replaceAll('__VERSION__', '0.0.1')
+    .replaceAll('__LICENSE__', 'MIT');
+  const tpl = scaffoldTemplates(id);
+  const files = Object.entries(tpl).map(([path, content]) => ({ path: fill(path), content: fill(content) }));
+  return {
+    ok: true,
+    series: id,
+    loader: (SERIES_INFO[id] || {}).loader || loader,
+    mcVersion,
+    modId,
+    files,
+    note: '骨架为最小可编译版本：先 gradle build 通过，再按系列教程章节逐步添加物品/方块/实体。',
+    next: ['besson_mod_project：把文件写入工程后体检', 'besson_tutorial_env：确认 JDK 与启动命令', 'besson_tutorial_series：按该系列章节推进'],
+  };
+}
+
 const TOOL_DEFS = [
   {
     name: 'besson_tutorial_lookup',
@@ -359,7 +644,9 @@ const TOOL_DEFS = [
           besson_tutorial_fetch: '抓取一篇文章正文（url 或 query 自动解析）',
           besson_tutorial_plan: '按目标生成学习路线（新手/进阶/迁移/26.1 前沿）',
           besson_tutorial_compare: '两个系列/版本的 API 与工程差异对比',
-          besson_tutorial_env: '某 MC 版本 + Loader 的环境搭建清单与命令',
+          besson_mod_scaffold: '生成工程骨架（gradle/主类/清单）',
+        besson_mod_mapping: '中文 ↔ 官方映射名对照',
+        besson_tutorial_env: '某 MC 版本 + Loader 的环境搭建清单与命令',
     besson_mod_project: '检查本地模组工程：加载器/版本/清单/主类/常见问题',
     besson_mod_migrate: '跨系列迁移清单：映射/构建插件/注册/事件/清单文件',
         },
@@ -791,6 +1078,51 @@ const TOOL_DEFS = [
         templates: { [sa.id]: TEMPLATES[sa.id], [sb.id]: TEMPLATES[sb.id] },
         note: '迁移节奏：先在构建期打通（Gradle/清单/主类可编译），再逐模块迁移注册与事件；F 系列（NeoForge 26.1）未开更，26.1 只参照 E。',
         version: VERSION,
+      };
+    },
+  },
+  {
+    name: 'besson_mod_scaffold',
+    description:
+      '生成 Minecraft 模组工程骨架（NeoForge 1.21.1 / Fabric 1.20.1 / Fabric 1.21.x / Fabric 26.1 / Forge 1.20.1）。' +
+      '给出 loader、mcVersion、modId 后返回可直接写入的文件清单（gradle 配置、主类、mod 清单），不直接落盘，由调用方保存后继续开发；建议先用 besson_mod_project 体检现有工程。',
+    parameters: {
+      type: 'object',
+      properties: {
+        loader: { type: 'string', description: 'fabric / forge / neoforge（默认 neoforge）' },
+        mcVersion: { type: 'string', description: 'MC 版本，如 1.20.1 / 1.21.1 / 26.1（默认 1.21.1）' },
+        modId: { type: 'string', description: 'mod id（小写，如 mysword）' },
+        name: { type: 'string', description: 'mod 显示名（如 My Sword）' },
+        group: { type: 'string', description: '包名（如 com.example.mysword）' },
+      },
+      required: [],
+      additionalProperties: true,
+    },
+    execute: (args) => buildScaffold(args),
+  },
+  {
+    name: 'besson_mod_mapping',
+    description:
+      'Minecraft 模组开发概念的中文 ↔ 官方映射名对照（物品/方块/方块实体/网络包/附魔/Mixin 等）。输入关键词返回匹配条目，不传关键词返回完整表。数据来源：北山Besson 教程与 Fabric/NeoForge/Forge 官方文档的公开命名。',
+    parameters: {
+      type: 'object',
+      properties: {
+        keyword: { type: 'string', description: '中文概念或英文类名，如 物品 / BlockEntity / 网络包' },
+      },
+      required: [],
+      additionalProperties: true,
+    },
+    execute: (args) => {
+      const a = args && typeof args === 'object' ? args : {};
+      const kw = a.keyword != null ? a.keyword : (a.query || a.Query || a.key || '');
+      const rows = lookupConcept(kw);
+      return {
+        ok: true,
+        keyword: String(kw || ''),
+        matched: rows.length,
+        entries: rows.map(([zh, mapping, pkg]) => ({ zh, mapping, pkg })),
+        source: '北山Besson 教程 + Fabric/NeoForge/Forge 官方公开命名',
+        note: rows.length === 0 ? '未匹配，试试：物品 / 方块 / 实体 / 网络包 / 生物群系 / Mixin / 附魔' : undefined,
       };
     },
   },

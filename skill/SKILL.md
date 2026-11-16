@@ -120,6 +120,8 @@ metadata:
 | `besson_tutorial_compare` | 两系列工程/API 差异对比 | 跨版本/跨 Loader 前 |
 | `besson_tutorial_env` | 环境搭建清单与命令 | 新建工程/换 JDK 前 |
 | `besson_mod_project` | 本地模组工程体检（加载器/版本/清单/主类） | 接手旧工程、排查加载失败 |
+| `besson_mod_scaffold` | 生成工程骨架（gradle/主类/清单） |
+| `besson_mod_mapping` | 中文 ↔ 官方映射名对照 |
 | `besson_mod_migrate` | 跨系列迁移清单（构建/清单/注册/事件差异） | 升级 MC 版本或换加载器 |
 
 > 插件与 MCP 两套实现能力一致；插件随 DSH 预设（besson-tools 行）常驻，MCP 适合接入其他客户端（Claude Desktop/Cursor 等）。
