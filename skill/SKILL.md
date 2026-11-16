@@ -112,11 +112,11 @@ metadata:
 
 | 工具 | 用途 | 何时用 |
 |---|---|---|
-| `besson_tutorial_lookup` | 关键词检索章节 | 每次动手前先搜 |
+| `besson_tutorial_lookup` | 关键词检索章节（可传 series/loader/mcVersion 按工程优先） | 每次动手前先搜 |
 | `besson_tutorial_index` | 系列/版本/数据健康总览 | 会话开始、排查空结果 |
 | `besson_tutorial_series` | 列系列全部章节/单章 | 规划学习顺序、查缺号 |
 | `besson_tutorial_fetch` | 抓一篇文章正文 | 要代码细节时抓 1-2 篇 |
-| `besson_tutorial_plan` | 按目标生成学习路线 | 新手/进阶/迁移/26.1 |
+| `besson_tutorial_plan` | 按目标生成学习路线（可传 path 让工程自动定系列，如传工程目录路径） | 新手/进阶/迁移/26.1 |
 | `besson_tutorial_compare` | 两系列工程/API 差异对比 | 跨版本/跨 Loader 前 |
 | `besson_tutorial_env` | 环境搭建清单与命令 | 新建工程/换 JDK 前 |
 | `besson_mod_project` | 本地模组工程体检（加载器/版本/清单/主类） | 接手旧工程、排查加载失败 |
@@ -125,6 +125,8 @@ metadata:
 | `besson_mod_migrate` | 跨系列迁移清单（构建/清单/注册/事件差异） | 升级 MC 版本或换加载器 |
 
 > 插件与 MCP 两套实现能力一致；插件随 DSH 预设（besson-tools 行）常驻，MCP 适合接入其他客户端（Claude Desktop/Cursor 等）。
+
+> **工程优先**：调用 `besson_tutorial_lookup` / `besson_tutorial_plan` 时传 `path`（工程目录）或 `series`，结果会按你的 loader 与 MC 版本优先排序；不传则按目标词推断。
 
 ## 🧰 模组开发辅助（v2.3.0）
 

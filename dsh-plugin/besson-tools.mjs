@@ -1,4 +1,4 @@
-// 北山Besson（BeiShan_Besson）Minecraft 模组开发助手 · DSH 插件（v2.4.5 · 适配 DeepSeek Harness 0.2.2-rc.3）
+// 北山Besson（BeiShan_Besson）Minecraft 模组开发助手 · DSH 插件（v2.4.6 · 适配 DeepSeek Harness 0.2.2-rc.3）
 // 数据与本仓库 skill/SKILL.md 同步（站点 217 篇文章全覆盖：章节 212 + 独立文章 4 + 总汇页 1）。
 // 零依赖：只 import node 内置模块，不依赖任何 npm 包。
 // 11 个工具：lookup / index / series / fetch / plan / compare / env / mod_project / mod_migrate / mod_scaffold / mod_mapping —— 检索、导航、路线规划、版本对比、环境搭建、工程体检、迁移清单、骨架生成、中文映射对照。
@@ -11,7 +11,7 @@ const DATA = {"site":"https://beishanair.github.io/","author":"BeiShan_Besson","
 
 const JAVA = { A: 'Java 17', B: 'Java 21', C: 'Java 17', D: 'Java 21', E: 'Java 25', F: 'Java 25' };
 const GAPS = { A: [], B: ['54（本站无 #54）'], C: ['22-27（未发布）'], D: ['13-24（未发布）'], E: [], F: ['全系列待开'] };
-const VERSION = '2.4.5';
+const VERSION = '2.4.6';
 
 // 系列画像：compare / env / plan 共用。只写有把握的定性事实，不写易过期的精确小版本号。
 const SERIES_INFO = {
@@ -97,13 +97,20 @@ function clampInt(value, min, max, fallback) {
   return fallback;
 }
 
-function search(query, limit) {
+function search(query, limit, opts = {}) {
   const tokens = tokenize(String(query || ''));
   const lim = clampInt(limit, 1, 25, 8);
-  if (tokens.length === 0) return { matched: [], total: 0, hint: '请输入查询关键词' };
+  if (tokens.length === 0) return { matched: [], total: 0, titleTotal: 0, metaTotal: 0, hint: '请输入查询关键词' };
+  const o = opts && typeof opts === 'object' ? opts : {};
+  const wantSeries = /^[a-f]$/i.test(String(o.series || '').trim()) ? String(o.series).trim().toUpperCase() : '';
+  const wantLoader = String(o.loader || '').trim().toLowerCase();
+  const wantMc = String(o.mcVersion || o.mc || '').trim().toLowerCase();
   const phraseQ = tokens.join(' ');
   const scored = [];
   for (const it of INDEX) {
+    if (wantSeries && it.series !== wantSeries) continue;
+    if (wantLoader && String(it.loader || '').toLowerCase() !== wantLoader) continue;
+    if (wantMc && !String(it.mc || '').toLowerCase().startsWith(wantMc)) continue;
     const title = it.title.toLowerCase();
     const meta = [it.series, it.seriesName, it.loader, it.mc, String(it.chapter)].join(' ').toLowerCase();
     let hits = 0;
@@ -125,6 +132,7 @@ function search(query, limit) {
       else if (/^\d+$/.test(tok) && String(it.chapter).startsWith(tok)) weight += 6;
       if (/^(neoforge|forge|fabric)$/.test(tok) && String(it.loader).toLowerCase() === tok) weight += 8;
       if (/^\d+(\.\d+){1,2}$/.test(tok) && String(it.mc).toLowerCase() === tok) weight += 8;
+      if (wantSeries && it.series === wantSeries) weight += 25;
     }
     if (hits === 0) continue;
     if (title.includes(phraseQ)) weight += 40;
@@ -142,7 +150,9 @@ function search(query, limit) {
     title: item.title,
     url: item.url,
   }));
-  return { matched, total: scored.length };
+  const titleTotal = scored.filter((x) => x.titleHits > 0).length;
+  const filters = { series: wantSeries || '', loader: wantLoader || '', mcVersion: wantMc || '' };
+  return { matched, total: scored.length, titleTotal, metaTotal: scored.length - titleTotal, filters };
 }
 
 function seriesMeta(id) {
@@ -185,21 +195,65 @@ function chapterMatches(id, keyword, limit) {
     .map((c) => ({ series: id, chapter: c.n, title: c.title, url: c.url }));
 }
 
-function planGoal(goal, level) {
+function planGoal(goal, level, opts = {}) {
   const g = String(goal || '').trim().toLowerCase();
+  const o = opts && typeof opts === 'object' ? opts : {};
+  const optSeries = String(o.series || '').trim().toUpperCase();
+  let prefer = /^[A-F]$/.test(optSeries) ? optSeries : '';
+  if (!prefer && o.path) {
+    try {
+      const pj = scanProject(String(o.path));
+      if (pj && pj.matchedSeries && pj.matchedSeries.id) prefer = pj.matchedSeries.id;
+    } catch (e) { /* 忽略体检失败，退回默认选系列 */ }
+  }
+  if (!prefer) {
+    const ld = String(o.loader || '').trim().toLowerCase();
+    const mc = String(o.mcVersion || o.mc || '').trim().toLowerCase();
+    if (ld || mc) {
+      const hit = DATA.series.find((x) => (!ld || String(x.loader || '').toLowerCase() === ld) && (!mc || String(x.mc || '').toLowerCase().startsWith(mc)));
+      if (hit) prefer = hit.id;
+    }
+  }
+
   const wantsLoader = /neoforge/.test(g) ? 'NeoForge' : /forge/.test(g) ? 'Forge' : /fabric/.test(g) ? 'Fabric' : '';
   const wantsLatest = /26\.1|最新|新版本|前沿|新api/.test(g);
-  const wantsAdvanced = /进阶|高级|网络|渲染|粒子|配方|rei|精炼|罐装|工具|附魔|结构|生物群系|维度|gui|声音/.test(g);
+  const wantsAdvanced = /进阶|高级|网络|渲染|粒子|配方|rei|精炼|罐装|工具|附魔|结构|生物群系|维度|gui|声音|mixin|数据|事件/.test(g);
   const wantsMigrate = /迁移|升级|转版本|移植|对比/.test(g);
 
+  const topicTokens = tokenize(String(goal || '')).filter((t) => !/^(a|b|c|d|e|f|neoforge|forge|fabric|进阶|高级|入门|基础|新手|学习|教程|方式|\d+(\.\d+){1,3})$/.test(t));
+  const seriesIds = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const topicScore = (id) => {
+    let n = 0;
+    for (const t of topicTokens) {
+      n += chapterMatches(id, t, 3).length;
+      if (t.length >= 2) n += chapterMatches(id, t.slice(0, 2), 1).length;
+    }
+    return n;
+  };
+
   const pick = [];
-  if (wantsMigrate) pick.push('A', 'D');
-  else if (wantsLatest) pick.push(wantsLoader === 'NeoForge' ? 'F' : 'E');
-  else if (wantsLoader === 'NeoForge') pick.push('D');
-  else if (wantsLoader === 'Forge') pick.push('C');
-  else if (wantsLoader === 'Fabric') pick.push('A');
-  else if (wantsAdvanced) pick.push('C', 'D');
-  else pick.push('A', 'B');
+  if (prefer) {
+    pick.push(prefer);
+  } else if (wantsMigrate) {
+    pick.push('A', 'D');
+  } else if (wantsLatest) {
+    pick.push(wantsLoader === 'NeoForge' ? 'F' : 'E');
+  } else if (wantsLoader === 'NeoForge') {
+    pick.push('D');
+  } else if (wantsLoader === 'Forge') {
+    pick.push('C');
+  } else if (wantsLoader === 'Fabric') {
+    pick.push('A');
+  } else {
+    const scoredSeries = seriesIds
+      .map((id) => ({ id, n: topicScore(id) }))
+      .filter((x) => x.n > 0)
+      .sort((a, b) => b.n - a.n);
+    if (scoredSeries.length > 0) pick.push(scoredSeries[0].id);
+    if (scoredSeries.length > 1) pick.push(scoredSeries[1].id);
+    if (pick.length === 0) pick.push('A', 'B');
+    else if (pick.length === 1 && /进阶|高级|网络|渲染|粒子|配方/.test(g)) pick.push('C', 'D');
+  }
 
   const steps = [];
   for (const id of pick) {
@@ -212,22 +266,36 @@ function planGoal(goal, level) {
       mc: info.mc,
       java: info.java,
       role: '主线',
-      note: `按 ${id} 系列逐章推进；环境搭建用 besson_tutorial_env`,
+      note: prefer ? ('按工程识别系列 ' + id + ' 推进；调用时传 path/series/loader/mcVersion 可随时切换优先系列') : '按目标语义命中的系列推进；传 path（工程目录）或 loader/mcVersion 可按工程版本优先',
     });
     const topicSeen = new Set();
-    const topicTokens = tokenize(String(goal || '')).filter((t) => !/^(a|b|c|d|e|f|neoforge|forge|fabric|进阶|高级|入门|基础|新手|学习|教程|方式|\d+(\.\d+){1,3})$/.test(t));
-    const addTopic = (c) => {
+    const addTopic = (c, role) => {
       const key = id + '#' + c.chapter;
       if (topicSeen.has(key) || topicSeen.size >= 6) return;
       topicSeen.add(key);
-      steps.push({ order: steps.length + 1, series: id, chapter: c.chapter, title: c.title, url: c.url, role: '专题' });
+      steps.push({ order: steps.length + 1, series: id, chapter: c.chapter, title: c.title, url: c.url, role: role || '专题' });
     };
     for (const t of topicTokens) {
       for (const c of chapterMatches(id, t, 2)) addTopic(c);
       if (t.length >= 2) for (const c of chapterMatches(id, t.slice(0, 2), 2)) addTopic(c);
     }
-    if (topicSeen.size === 0) {
-      for (const c of chapterMatches(id, '第一个', 1)) addTopic(c);
+    if (topicSeen.size === 0 && !prefer) {
+      for (const c of chapterMatches(id, '第一个', 1)) addTopic(c, '起步');
+    }
+  }
+
+  if (prefer) {
+    const extSeen = new Set();
+    for (const t of topicTokens) {
+      for (const id2 of seriesIds) {
+        if (id2 === prefer || extSeen.size >= 3) continue;
+        for (const c of chapterMatches(id2, t, 2)) {
+          const key = id2 + '#' + c.chapter;
+          if (extSeen.has(key)) continue;
+          extSeen.add(key);
+          steps.push({ order: steps.length + 1, series: id2, chapter: c.chapter, title: c.title, url: c.url, role: '扩展' });
+        }
+      }
     }
   }
   void level;
@@ -651,6 +719,140 @@ function buildScaffold(args) {
   };
 }
 
+function scanProject(pathArg) {
+  const base = pathArg ? resolve(String(pathArg)) : resolve('.');
+      if (!existsSync(base)) return { error: '目录不存在：' + base };
+      const issues = [];
+      const info = { path: base };
+      let gradleProps = {};
+      for (const name of ['gradle.properties']) {
+        const f = join(base, name);
+        if (!existsSync(f)) continue;
+        const text = readFileSync(f, 'utf8');
+        for (const line of text.split(/\r?\n/)) {
+          const m = line.match(/^\s*([A-Za-z0-9_.-]+)\s*=\s*(.+)$/);
+          if (m && !m[1].startsWith('#')) gradleProps[m[1]] = m[2].trim();
+        }
+        info.gradleProperties = Object.fromEntries(
+          Object.entries(gradleProps).filter(([k]) => /version|loader|mapping|moddev|toolchain|java/i.test(k)),
+        );
+      }
+      // 构建文件与构建插件
+      let buildText = '';
+      for (const name of ['build.gradle.kts', 'build.gradle']) {
+        const f = join(base, name);
+        if (existsSync(f)) { buildText = readFileSync(f, 'utf8'); info.buildFile = name; break; }
+      }
+      if (!buildText) {
+        issues.push('未找到 build.gradle / build.gradle.kts —— 可能不是 Gradle 工程');
+      } else {
+        const plugins = [];
+        if (/net\.neoforged\.moddev|net\.neoforged\.gradle\.userdev|neoforge/i.test(buildText)) plugins.push('neoforge');
+        if (/fabric-loom|fabric-loader/i.test(buildText) || typeof gradleProps.fabric_loader_version === 'string') plugins.push('fabric');
+        if (/net\.minecraftforge\.gradle|forgegradle/i.test(buildText)) plugins.push('forge');
+        if (plugins.length === 0) issues.push('无法从构建文件识别加载器插件（fabric-loom / ForgeGradle / NeoGradle / ModDevGradle）');
+        info.buildPlugins = plugins;
+        const javaMatch = buildText.match(/JavaLanguageVersion\.of\((\d+)\)|languageVersion\s*=\s*[^\d]*(\d+)|JavaVersion\.VERSION_(\d+)/);
+        if (javaMatch) info.javaToolchain = 'Java ' + (javaMatch[1] || javaMatch[2] || javaMatch[3]);
+      }
+      // MC 版本
+      let mc = gradleProps.minecraft_version || gradleProps.fabric_minecraft_version || '';
+      if (!mc && gradleProps.neoforge_version) {
+        const nm = String(gradleProps.neoforge_version).match(/^(\d+)\.(\d+)\./);
+        if (nm) mc = '1.' + nm[1] + '.' + nm[2];
+      }
+      if (!mc) {
+        const bm = buildText.match(/minecraft_version\s*=\s*['"]([^'"]+)['"]/);
+        if (bm) mc = bm[1];
+      }
+      info.minecraft = mc || '';
+      // mod 清单（兼容 ModDevGradle 模板：src/main/templates 下的占位清单在打包时展开）
+      const modfiles = [];
+      const normPath = (p) => String(p).replace(/\\/g, '/');
+      const expandProp = (v) => {
+        const m = String(v).match(/^\$\{([A-Za-z0-9_.-]+)\}$/);
+        return m && gradleProps[m[1]] != null ? String(gradleProps[m[1]]) : String(v);
+      };
+      for (const [sub, rel, loader] of [
+        ['resources', 'META-INF/neoforge.mods.toml', 'neoforge'],
+        ['resources', 'META-INF/mods.toml', 'forge'],
+        ['resources', 'fabric.mod.json', 'fabric'],
+        ['templates', 'META-INF/neoforge.mods.toml', 'neoforge'],
+        ['templates', 'META-INF/mods.toml', 'forge'],
+        ['templates', 'fabric.mod.json', 'fabric'],
+      ]) {
+        const file = join(base, 'src', 'main', sub, ...rel.split('/'));
+        if (!existsSync(file)) continue;
+        modfiles.push(file);
+        const text = readFileSync(file, 'utf8');
+        if (!info.modfile) info.modfile = { file: rel, loader, template: sub === 'templates' };
+        if (info.modId == null) {
+          const idMatch = text.match(/modId\s*=\s*"([^"]+)"/) || text.match(/"id"\s*:\s*"([^"]+)"/);
+          if (idMatch) info.modId = expandProp(idMatch[1]);
+        }
+      }
+      info.modfiles = modfiles.map((f) => normPath(f).split(normPath(base) + '/').join(''));
+      if (modfiles.length === 0) issues.push('未找到 mod 清单：src/main/resources 或 src/main/templates 下没有 fabric.mod.json / META-INF/mods.toml / META-INF/neoforge.mods.toml');
+      // 主类
+      const javaFiles = [];
+      const walk = (dir) => {
+        if (!existsSync(dir)) return;
+        for (const name of readdirSync(dir)) {
+          const p = join(dir, name);
+          const st = statSync(p);
+          if (st.isDirectory()) walk(p);
+          else if (/\.java$/.test(name)) javaFiles.push(p);
+        }
+      };
+      walk(join(base, 'src', 'main', 'java'));
+      info.javaFileCount = javaFiles.length;
+      const entries = [];
+      for (const p of javaFiles) {
+        const text = readFileSync(p, 'utf8');
+        const clsMatch = text.match(/\bclass\s+([A-Za-z_$][\w$]*)/);
+        if (!clsMatch) continue;
+        const hasMod = /@Mod\s*\(/.test(text);
+        const hasInit = /ModInitializer/.test(text);
+        if (!hasMod && !hasInit) continue;
+        const cls = clsMatch[1];
+        const rel = p.replace(/^.*src[\\/]main[\\/]java[\\/]/, '').replace(/\.java$/, '').replace(/[\\/]/g, '.');
+        const isClient = /Client(Mod|Initializer)|Dist\.CLIENT|\.client\./i.test(text) || /Client$/.test(cls);
+        entries.push({ class: rel, kind: hasMod ? 'mod' : 'initializer', role: isClient ? 'client' : 'main', file: rel });
+      }
+      if (entries.length > 0) {
+        const mains = entries.filter((e) => e.role !== 'client');
+        info.mainClass = (mains[0] || entries[0]).class;
+        info.mainClasses = entries;
+        if (entries.length > 1) info.mainClassNote = '检测到多个入口类：' + entries.map((e) => e.class + '(' + e.role + ')').join(', ');
+      } else if (javaFiles.length) {
+        issues.push('src/main/java 中未找到 @Mod 注解或 ModInitializer 入口类');
+      }
+      // 与系列画像对照
+      let matched = null;
+      if (info.minecraft && (info.buildPlugins || []).length) {
+        const loader = info.buildPlugins[0];
+        const candidates = DATA.series.filter((s) => String(s.mc || '').toLowerCase().replace(/\.x$/, '') === String(info.minecraft).toLowerCase().replace(/\.x$/, '') || String(info.minecraft).startsWith('1.21'));
+        const loaderMatch = candidates.find((s) => String(s.loader || '').toLowerCase() === loader);
+        matched = (loaderMatch || candidates[0] || null);
+      }
+      if (matched) {
+        info.matchedSeries = { id: matched.id, name: matched.name, mc: matched.mc, loader: matched.loader, java: JAVA[matched.id] };
+        const expectJava = String(SERIES_INFO[matched.id].jdk || '');
+        const actualJava = (info.javaToolchain || '').match(/(\d+)/);
+        if (expectJava && actualJava && actualJava[1] !== expectJava) {
+          issues.push('Java 工具链 ' + info.javaToolchain + ' 与站点预期 Java ' + expectJava + ' 不一致（' + matched.id + ' 系列）');
+        }
+      } else if (info.minecraft) {
+        issues.push('MC 版本 ' + info.minecraft + ' 未匹配到教程系列（A 1.20.1 / B 1.21.X / C 1.20.1 Forge / D 1.21.1 / E 26.1 / F 26.1）');
+      }
+      return {
+        ...info,
+        issues,
+        ok: issues.length === 0,
+        next: ['besson_mod_migrate：从当前系列规划迁移', 'besson_tutorial_env：按匹配系列生成环境清单', 'besson_tutorial_series：查看该系列全部章节'],
+      };
+}
+
 const TOOL_DEFS = [
   {
     name: 'besson_tutorial_lookup',
@@ -662,6 +864,9 @@ const TOOL_DEFS = [
       type: 'object',
       properties: {
         query: { type: 'string', description: '检索关键词，可组合使用：系列字母（A-F）、Loader、MC 版本、章节号、主题词（如 "D 流体"、"forge 盔甲"、"26.1 食物"）' },
+        series: { type: 'string', description: '可选：限定/优先系列 A-F（如工程是 NeoForge 1.21.1 就传 D）' },
+        loader: { type: 'string', description: '可选：fabric / forge / neoforge' },
+        mcVersion: { type: 'string', description: '可选：1.20.1 / 1.21.1 / 26.1' },
         limit: { type: 'integer', description: '最多返回的匹配条数（1-25，默认 8）' },
       },
       required: ['query'],
@@ -671,11 +876,11 @@ const TOOL_DEFS = [
       const a = args && typeof args === 'object' ? args : {};
       const rawQuery = a.query != null ? a.query : (a.Query || a.text || a.keyword || a.kw || '');
       const q = String(rawQuery == null ? '' : rawQuery);
-      const result = search(q, a.limit);
+      const result = search(q, a.limit, { series: a.series, loader: a.loader, mcVersion: a.mcVersion });
       const lines = [];
       const matches = result.matched || [];
       if (q.trim()) {
-        lines.push(`「${q}」在 北山Besson 教程站 中共命中 ${result.total} 条，展示前 ${matches.length} 条：`);
+        lines.push(`「${q}」命中 ${result.total} 条（标题直接命中 ${result.titleTotal || 0} / 元数据命中 ${result.metaTotal || 0}），展示前 ${matches.length} 条：`);
         if (matches.length === 0) lines.push('未命中任何章节，建议换关键词，或调用 besson_tutorial_index 查看系列总览，或直接访问 https://beishanair.github.io/2099/12/31/sum/');
       } else {
         lines.push(result.hint || '请输入查询关键词（如 "NeoForge 生物群系"、"附魔"）');
@@ -684,7 +889,7 @@ const TOOL_DEFS = [
         const label = m.series ? `[${m.series} ${m.seriesName} #${m.chapter} / ${m.java}]` : '[独立文章]';
         lines.push(`${label} ${m.title} — ${m.url}`);
       }
-      return { query: q, total: result.total, matched: matches, indexed: INDEX.length, hint: result.hint || '', note: lines.join('\n') };
+      return { query: q, total: result.total, titleTotal: result.titleTotal || 0, metaTotal: result.metaTotal || 0, filters: result.filters, matched: matches, indexed: INDEX.length, hint: result.hint || '', note: lines.join('\n') };
     },
   },
   {
@@ -831,6 +1036,10 @@ const TOOL_DEFS = [
       properties: {
         goal: { type: 'string', description: '学习目标，例如 "Fabric 入门做第一个模组"、"NeoForge 进阶 网络包"、"迁移到 26.1"' },
         level: { type: 'string', description: '可选：beginner / intermediate / advanced' },
+        path: { type: 'string', description: '可选：模组工程目录（本地路径）。传了会自动体检并识别版本，按该工程系列排路线' },
+        series: { type: 'string', description: '可选：优先系列 A-F（覆盖自动识别）' },
+        loader: { type: 'string', description: '可选：fabric / forge / neoforge' },
+        mcVersion: { type: 'string', description: '可选：1.20.1 / 1.21.1 / 26.1' },
         limit: { type: 'integer', description: '可选：专题章节数量上限（1-10，默认 3）' },
       },
       required: ['goal'],
@@ -839,7 +1048,7 @@ const TOOL_DEFS = [
     execute: (args) => {
       const a = args && typeof args === 'object' ? args : {};
       const goal = String(a.goal || '');
-      const steps = planGoal(goal, a.level);
+      const steps = planGoal(goal, a.level, { path: a.path, series: a.series, loader: a.loader, mcVersion: a.mcVersion });
       const picks = [...new Set(steps.map((s) => s.series).filter(Boolean))];
       const envSuggest = picks.slice(0, 1).map((id) => ({
         series: id,
@@ -980,6 +1189,7 @@ const TOOL_DEFS = [
       };
     },
   },
+
   {
     name: 'besson_mod_project',
     description:
@@ -995,137 +1205,7 @@ const TOOL_DEFS = [
     },
     execute: (args) => {
       const a = args && typeof args === 'object' ? args : {};
-      const base = a.path ? resolve(String(a.path)) : resolve('.');
-      if (!existsSync(base)) return { error: '目录不存在：' + base };
-      const issues = [];
-      const info = { path: base };
-      let gradleProps = {};
-      for (const name of ['gradle.properties']) {
-        const f = join(base, name);
-        if (!existsSync(f)) continue;
-        const text = readFileSync(f, 'utf8');
-        for (const line of text.split(/\r?\n/)) {
-          const m = line.match(/^\s*([A-Za-z0-9_.-]+)\s*=\s*(.+)$/);
-          if (m && !m[1].startsWith('#')) gradleProps[m[1]] = m[2].trim();
-        }
-        info.gradleProperties = Object.fromEntries(
-          Object.entries(gradleProps).filter(([k]) => /version|loader|mapping|moddev|toolchain|java/i.test(k)),
-        );
-      }
-      // 构建文件与构建插件
-      let buildText = '';
-      for (const name of ['build.gradle.kts', 'build.gradle']) {
-        const f = join(base, name);
-        if (existsSync(f)) { buildText = readFileSync(f, 'utf8'); info.buildFile = name; break; }
-      }
-      if (!buildText) {
-        issues.push('未找到 build.gradle / build.gradle.kts —— 可能不是 Gradle 工程');
-      } else {
-        const plugins = [];
-        if (/net\.neoforged\.moddev|net\.neoforged\.gradle\.userdev|neoforge/i.test(buildText)) plugins.push('neoforge');
-        if (/fabric-loom|fabric-loader/i.test(buildText) || typeof gradleProps.fabric_loader_version === 'string') plugins.push('fabric');
-        if (/net\.minecraftforge\.gradle|forgegradle/i.test(buildText)) plugins.push('forge');
-        if (plugins.length === 0) issues.push('无法从构建文件识别加载器插件（fabric-loom / ForgeGradle / NeoGradle / ModDevGradle）');
-        info.buildPlugins = plugins;
-        const javaMatch = buildText.match(/JavaLanguageVersion\.of\((\d+)\)|languageVersion\s*=\s*[^\d]*(\d+)|JavaVersion\.VERSION_(\d+)/);
-        if (javaMatch) info.javaToolchain = 'Java ' + (javaMatch[1] || javaMatch[2] || javaMatch[3]);
-      }
-      // MC 版本
-      let mc = gradleProps.minecraft_version || gradleProps.fabric_minecraft_version || '';
-      if (!mc && gradleProps.neoforge_version) {
-        const nm = String(gradleProps.neoforge_version).match(/^(\d+)\.(\d+)\./);
-        if (nm) mc = '1.' + nm[1] + '.' + nm[2];
-      }
-      if (!mc) {
-        const bm = buildText.match(/minecraft_version\s*=\s*['"]([^'"]+)['"]/);
-        if (bm) mc = bm[1];
-      }
-      info.minecraft = mc || '';
-      // mod 清单（兼容 ModDevGradle 模板：src/main/templates 下的占位清单在打包时展开）
-      const modfiles = [];
-      const normPath = (p) => String(p).replace(/\\/g, '/');
-      const expandProp = (v) => {
-        const m = String(v).match(/^\$\{([A-Za-z0-9_.-]+)\}$/);
-        return m && gradleProps[m[1]] != null ? String(gradleProps[m[1]]) : String(v);
-      };
-      for (const [sub, rel, loader] of [
-        ['resources', 'META-INF/neoforge.mods.toml', 'neoforge'],
-        ['resources', 'META-INF/mods.toml', 'forge'],
-        ['resources', 'fabric.mod.json', 'fabric'],
-        ['templates', 'META-INF/neoforge.mods.toml', 'neoforge'],
-        ['templates', 'META-INF/mods.toml', 'forge'],
-        ['templates', 'fabric.mod.json', 'fabric'],
-      ]) {
-        const file = join(base, 'src', 'main', sub, ...rel.split('/'));
-        if (!existsSync(file)) continue;
-        modfiles.push(file);
-        const text = readFileSync(file, 'utf8');
-        if (!info.modfile) info.modfile = { file: rel, loader, template: sub === 'templates' };
-        if (info.modId == null) {
-          const idMatch = text.match(/modId\s*=\s*"([^"]+)"/) || text.match(/"id"\s*:\s*"([^"]+)"/);
-          if (idMatch) info.modId = expandProp(idMatch[1]);
-        }
-      }
-      info.modfiles = modfiles.map((f) => normPath(f).split(normPath(base) + '/').join(''));
-      if (modfiles.length === 0) issues.push('未找到 mod 清单：src/main/resources 或 src/main/templates 下没有 fabric.mod.json / META-INF/mods.toml / META-INF/neoforge.mods.toml');
-      // 主类
-      const javaFiles = [];
-      const walk = (dir) => {
-        if (!existsSync(dir)) return;
-        for (const name of readdirSync(dir)) {
-          const p = join(dir, name);
-          const st = statSync(p);
-          if (st.isDirectory()) walk(p);
-          else if (/\.java$/.test(name)) javaFiles.push(p);
-        }
-      };
-      walk(join(base, 'src', 'main', 'java'));
-      info.javaFileCount = javaFiles.length;
-      const entries = [];
-      for (const p of javaFiles) {
-        const text = readFileSync(p, 'utf8');
-        const clsMatch = text.match(/\bclass\s+([A-Za-z_$][\w$]*)/);
-        if (!clsMatch) continue;
-        const hasMod = /@Mod\s*\(/.test(text);
-        const hasInit = /ModInitializer/.test(text);
-        if (!hasMod && !hasInit) continue;
-        const cls = clsMatch[1];
-        const rel = p.replace(/^.*src[\\/]main[\\/]java[\\/]/, '').replace(/\.java$/, '').replace(/[\\/]/g, '.');
-        const isClient = /Client(Mod|Initializer)|Dist\.CLIENT|\.client\./i.test(text) || /Client$/.test(cls);
-        entries.push({ class: rel, kind: hasMod ? 'mod' : 'initializer', role: isClient ? 'client' : 'main', file: rel });
-      }
-      if (entries.length > 0) {
-        const mains = entries.filter((e) => e.role !== 'client');
-        info.mainClass = (mains[0] || entries[0]).class;
-        info.mainClasses = entries;
-        if (entries.length > 1) info.mainClassNote = '检测到多个入口类：' + entries.map((e) => e.class + '(' + e.role + ')').join(', ');
-      } else if (javaFiles.length) {
-        issues.push('src/main/java 中未找到 @Mod 注解或 ModInitializer 入口类');
-      }
-      // 与系列画像对照
-      let matched = null;
-      if (info.minecraft && (info.buildPlugins || []).length) {
-        const loader = info.buildPlugins[0];
-        const candidates = DATA.series.filter((s) => String(s.mc || '').toLowerCase().replace(/\.x$/, '') === String(info.minecraft).toLowerCase().replace(/\.x$/, '') || String(info.minecraft).startsWith('1.21'));
-        const loaderMatch = candidates.find((s) => String(s.loader || '').toLowerCase() === loader);
-        matched = (loaderMatch || candidates[0] || null);
-      }
-      if (matched) {
-        info.matchedSeries = { id: matched.id, name: matched.name, mc: matched.mc, loader: matched.loader, java: JAVA[matched.id] };
-        const expectJava = String(SERIES_INFO[matched.id].jdk || '');
-        const actualJava = (info.javaToolchain || '').match(/(\d+)/);
-        if (expectJava && actualJava && actualJava[1] !== expectJava) {
-          issues.push('Java 工具链 ' + info.javaToolchain + ' 与站点预期 Java ' + expectJava + ' 不一致（' + matched.id + ' 系列）');
-        }
-      } else if (info.minecraft) {
-        issues.push('MC 版本 ' + info.minecraft + ' 未匹配到教程系列（A 1.20.1 / B 1.21.X / C 1.20.1 Forge / D 1.21.1 / E 26.1 / F 26.1）');
-      }
-      return {
-        ...info,
-        issues,
-        ok: issues.length === 0,
-        next: ['besson_mod_migrate：从当前系列规划迁移', 'besson_tutorial_env：按匹配系列生成环境清单', 'besson_tutorial_series：查看该系列全部章节'],
-      };
+      return scanProject(a.path ? String(a.path) : '');
     },
   },
   {

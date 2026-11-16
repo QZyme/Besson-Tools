@@ -1,4 +1,4 @@
-// 北山Besson 教程检索 MCP 服务器（v2.4.5 · 适配 DeepSeek Harness 0.2.2-rc.3）
+// 北山Besson 教程检索 MCP 服务器（v2.4.6 · 适配 DeepSeek Harness 0.2.2-rc.3）
 // 用法：
 //   stdio（默认）: node mcp-server.mjs
 //   HTTP        : node mcp-server.mjs --http   （环境变量 PORT，默认 3987）
@@ -15,7 +15,7 @@ import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const VERSION = '2.4.5';
+const VERSION = '2.4.6';
 
 // ── 数据加载 ──────────────────────────────────────────────────────────────
 function loadData() {
@@ -81,40 +81,74 @@ function buildSearchIndex() {
 }
 const INDEX = buildSearchIndex();
 
+function clampInt(value, min, max, fallback) {
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, Math.floor(n)));
+}
+
 function tokenize(q) {
   return q.toLowerCase()
     .replace(/[、，。；：·&+（）()"'\-—_|/\\]/g, ' ')
     .split(/\s+/).map((t) => t.trim()).filter((t) => t.length > 0);
 }
 
-function search(query, limit) {
+function search(query, limit, opts = {}) {
   const tokens = tokenize(String(query || ''));
-  const lim = Math.max(1, Math.min(25, Number.isFinite(limit) ? Math.floor(limit) : 8));
-  if (tokens.length === 0) return { matched: [], total: 0, hint: '请输入查询关键词' };
+  const lim = clampInt(limit, 1, 25, 8);
+  if (tokens.length === 0) return { matched: [], total: 0, titleTotal: 0, metaTotal: 0, hint: '请输入查询关键词' };
+  const o = opts && typeof opts === 'object' ? opts : {};
+  const wantSeries = /^[a-f]$/i.test(String(o.series || '').trim()) ? String(o.series).trim().toUpperCase() : '';
+  const wantLoader = String(o.loader || '').trim().toLowerCase();
+  const wantMc = String(o.mcVersion || o.mc || '').trim().toLowerCase();
+  const phraseQ = tokens.join(' ');
   const scored = [];
   for (const it of INDEX) {
-    const t = it.haystack;
-    let hits = 0, weight = 0, phraseHit = false;
+    if (wantSeries && it.series !== wantSeries) continue;
+    if (wantLoader && String(it.loader || '').toLowerCase() !== wantLoader) continue;
+    if (wantMc && !String(it.mc || '').toLowerCase().startsWith(wantMc)) continue;
+    const title = it.title.toLowerCase();
+    const meta = [it.series, it.seriesName, it.loader, it.mc, String(it.chapter)].join(' ').toLowerCase();
+    let hits = 0;
+    let titleHits = 0;
+    let weight = 0;
     for (const tok of tokens) {
-      if (t.includes(tok)) {
-        hits += 1;
-        weight += tok.length;
-        if (/^[a-f]$/.test(tok) && it.series.toLowerCase() === tok) weight += 4;
-        if (String(it.chapter) === tok) weight += 12;
-        if (/^\d+$/.test(tok) && String(it.chapter).startsWith(tok)) weight += 6;
+      const inTitle = title.includes(tok);
+      const inMeta = meta.includes(tok);
+      if (!inTitle && !inMeta) continue;
+      hits += 1;
+      if (inTitle) {
+        titleHits += 1;
+        weight += 10;
+      } else {
+        weight += 2;
       }
+      if (/^[a-f]$/.test(tok) && it.series.toLowerCase() === tok) weight += 6;
+      if (String(it.chapter) === tok) weight += 14;
+      else if (/^\d+$/.test(tok) && String(it.chapter).startsWith(tok)) weight += 6;
+      if (/^(neoforge|forge|fabric)$/.test(tok) && String(it.loader).toLowerCase() === tok) weight += 8;
+      if (/^\d+(\.\d+){1,2}$/.test(tok) && String(it.mc).toLowerCase() === tok) weight += 8;
+      if (wantSeries && it.series === wantSeries) weight += 25;
     }
-    if (it.title.toLowerCase().includes(tokens.join(' '))) { phraseHit = true; weight += 20; }
-    if (hits > 0) scored.push({ item: it, hits, weight, phraseHit });
+    if (hits === 0) continue;
+    if (title.includes(phraseQ)) weight += 40;
+    scored.push({ item: it, hits, titleHits, weight });
   }
-  scored.sort((a, b) => (b.hits - a.hits) || (b.weight - a.weight) || (b.phraseHit ? 1 : 0) - (a.phraseHit ? 1 : 0));
-  return {
-    matched: scored.slice(0, lim).map(({ item }) => ({
-      kind: item.kind, series: item.series, seriesName: item.seriesName, loader: item.loader,
-      mc: item.mc, java: item.java, chapter: item.chapter, title: item.title, url: item.url,
-    })),
-    total: scored.length,
-  };
+  scored.sort((a, b) => (b.titleHits - a.titleHits) || (b.hits - a.hits) || (b.weight - a.weight));
+  const matched = scored.slice(0, lim).map(({ item }) => ({
+    kind: item.kind,
+    series: item.series,
+    seriesName: item.seriesName,
+    loader: item.loader,
+    mc: item.mc,
+    java: item.java,
+    chapter: item.chapter,
+    title: item.title,
+    url: item.url,
+  }));
+  const titleTotal = scored.filter((x) => x.titleHits > 0).length;
+  const filters = { series: wantSeries || '', loader: wantLoader || '', mcVersion: wantMc || '' };
+  return { matched, total: scored.length, titleTotal, metaTotal: scored.length - titleTotal, filters };
 }
 
 function seriesMeta(id) {
@@ -157,21 +191,65 @@ function chapterMatches(id, keyword, limit) {
     .map((c) => ({ series: id, chapter: c.n, title: c.title, url: c.url }));
 }
 
-function planGoal(goal, level) {
+function planGoal(goal, level, opts = {}) {
   const g = String(goal || '').trim().toLowerCase();
+  const o = opts && typeof opts === 'object' ? opts : {};
+  const optSeries = String(o.series || '').trim().toUpperCase();
+  let prefer = /^[A-F]$/.test(optSeries) ? optSeries : '';
+  if (!prefer && o.path) {
+    try {
+      const pj = scanProject(String(o.path));
+      if (pj && pj.matchedSeries && pj.matchedSeries.id) prefer = pj.matchedSeries.id;
+    } catch (e) { /* 忽略体检失败，退回默认选系列 */ }
+  }
+  if (!prefer) {
+    const ld = String(o.loader || '').trim().toLowerCase();
+    const mc = String(o.mcVersion || o.mc || '').trim().toLowerCase();
+    if (ld || mc) {
+      const hit = DATA.series.find((x) => (!ld || String(x.loader || '').toLowerCase() === ld) && (!mc || String(x.mc || '').toLowerCase().startsWith(mc)));
+      if (hit) prefer = hit.id;
+    }
+  }
+
   const wantsLoader = /neoforge/.test(g) ? 'NeoForge' : /forge/.test(g) ? 'Forge' : /fabric/.test(g) ? 'Fabric' : '';
   const wantsLatest = /26\.1|最新|新版本|前沿|新api/.test(g);
-  const wantsAdvanced = /进阶|高级|网络|渲染|粒子|配方|rei|精炼|罐装|工具|附魔|结构|生物群系|维度|gui|声音/.test(g);
+  const wantsAdvanced = /进阶|高级|网络|渲染|粒子|配方|rei|精炼|罐装|工具|附魔|结构|生物群系|维度|gui|声音|mixin|数据|事件/.test(g);
   const wantsMigrate = /迁移|升级|转版本|移植|对比/.test(g);
 
+  const topicTokens = tokenize(String(goal || '')).filter((t) => !/^(a|b|c|d|e|f|neoforge|forge|fabric|进阶|高级|入门|基础|新手|学习|教程|方式|\d+(\.\d+){1,3})$/.test(t));
+  const seriesIds = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const topicScore = (id) => {
+    let n = 0;
+    for (const t of topicTokens) {
+      n += chapterMatches(id, t, 3).length;
+      if (t.length >= 2) n += chapterMatches(id, t.slice(0, 2), 1).length;
+    }
+    return n;
+  };
+
   const pick = [];
-  if (wantsMigrate) pick.push('A', 'D');
-  else if (wantsLatest) pick.push(wantsLoader === 'NeoForge' ? 'F' : 'E');
-  else if (wantsLoader === 'NeoForge') pick.push('D');
-  else if (wantsLoader === 'Forge') pick.push('C');
-  else if (wantsLoader === 'Fabric') pick.push('A');
-  else if (wantsAdvanced) pick.push('C', 'D');
-  else pick.push('A', 'B');
+  if (prefer) {
+    pick.push(prefer);
+  } else if (wantsMigrate) {
+    pick.push('A', 'D');
+  } else if (wantsLatest) {
+    pick.push(wantsLoader === 'NeoForge' ? 'F' : 'E');
+  } else if (wantsLoader === 'NeoForge') {
+    pick.push('D');
+  } else if (wantsLoader === 'Forge') {
+    pick.push('C');
+  } else if (wantsLoader === 'Fabric') {
+    pick.push('A');
+  } else {
+    const scoredSeries = seriesIds
+      .map((id) => ({ id, n: topicScore(id) }))
+      .filter((x) => x.n > 0)
+      .sort((a, b) => b.n - a.n);
+    if (scoredSeries.length > 0) pick.push(scoredSeries[0].id);
+    if (scoredSeries.length > 1) pick.push(scoredSeries[1].id);
+    if (pick.length === 0) pick.push('A', 'B');
+    else if (pick.length === 1 && /进阶|高级|网络|渲染|粒子|配方/.test(g)) pick.push('C', 'D');
+  }
 
   const steps = [];
   for (const id of pick) {
@@ -184,30 +262,42 @@ function planGoal(goal, level) {
       mc: info.mc,
       java: info.java,
       role: '主线',
-      note: `按 ${id} 系列逐章推进；环境搭建用 besson_tutorial_env`,
+      note: prefer ? ('按工程识别系列 ' + id + ' 推进；调用时传 path/series/loader/mcVersion 可随时切换优先系列') : '按目标语义命中的系列推进；传 path（工程目录）或 loader/mcVersion 可按工程版本优先',
     });
     const topicSeen = new Set();
-    const topicTokens = tokenize(String(goal || '')).filter((t) => !/^(a|b|c|d|e|f|neoforge|forge|fabric|进阶|高级|入门|基础|新手|学习|教程|方式|\d+(\.\d+){1,3})$/.test(t));
-    const addTopic = (c) => {
+    const addTopic = (c, role) => {
       const key = id + '#' + c.chapter;
       if (topicSeen.has(key) || topicSeen.size >= 6) return;
       topicSeen.add(key);
-      steps.push({ order: steps.length + 1, series: id, chapter: c.chapter, title: c.title, url: c.url, role: '专题' });
+      steps.push({ order: steps.length + 1, series: id, chapter: c.chapter, title: c.title, url: c.url, role: role || '专题' });
     };
     for (const t of topicTokens) {
       for (const c of chapterMatches(id, t, 2)) addTopic(c);
       if (t.length >= 2) for (const c of chapterMatches(id, t.slice(0, 2), 2)) addTopic(c);
     }
-    if (topicSeen.size === 0) {
-      for (const c of chapterMatches(id, '第一个', 1)) addTopic(c);
+    if (topicSeen.size === 0 && !prefer) {
+      for (const c of chapterMatches(id, '第一个', 1)) addTopic(c, '起步');
+    }
+  }
+
+  if (prefer) {
+    const extSeen = new Set();
+    for (const t of topicTokens) {
+      for (const id2 of seriesIds) {
+        if (id2 === prefer || extSeen.size >= 3) continue;
+        for (const c of chapterMatches(id2, t, 2)) {
+          const key = id2 + '#' + c.chapter;
+          if (extSeen.has(key)) continue;
+          extSeen.add(key);
+          steps.push({ order: steps.length + 1, series: id2, chapter: c.chapter, title: c.title, url: c.url, role: '扩展' });
+        }
+      }
     }
   }
   void level;
   return steps;
 }
 
-// 注意：DSH ToolRuntime 调用 output.render(args, value) —— 第一个实参是调用参数，
-// 第二个才是 execute 的返回值。不能写成交叉引用，否则调用方拿到的是空白/参数回显。
 function text(value) {
   return { content: [{ type: 'text', text: JSON.stringify(value, null, 2) }] };
 }
@@ -266,10 +356,13 @@ server.registerTool('besson_tutorial_lookup', {
     '输入关键词（例如："NeoForge 生物群系"、"Fabric 1.20.1 流体"、"附魔"、"粒子"、"D 44"），返回匹配章节的标题与链接，并可用 limit 控制返回条数。',
   inputSchema: {
     query: z.string().describe('检索关键词，可组合使用：系列字母（A-F）、Loader、MC 版本、章节号、主题词'),
+    series: z.string().optional().describe('可选：限定/优先系列 A-F（如工程是 NeoForge 1.21.1 就传 D）'),
+    loader: z.string().optional().describe('可选：fabric / forge / neoforge'),
+    mcVersion: z.string().optional().describe('可选：1.20.1 / 1.21.1 / 26.1'),
     limit: z.number().int().min(1).max(25).optional().describe('最多返回的匹配条数（1-25，默认 8）'),
   },
-}, async ({ query, limit }) => {
-  const r = search(query, limit);
+}, async ({ query, series, loader, mcVersion, limit }) => {
+  const r = search(query, limit, { series, loader, mcVersion });
   const lines = [`「${query}」在 北山Besson 教程站 中共命中 ${r.total} 条，展示前 ${r.matched.length} 条：`];
   if (r.hint) lines.push(r.hint);
   if (r.matched.length === 0 && !r.hint) lines.push('未命中任何章节，建议换关键词，或调用 besson_tutorial_index 查看系列总览');
@@ -389,9 +482,13 @@ server.registerTool('besson_tutorial_plan', {
   inputSchema: {
     goal: z.string().describe('学习目标，例如 "Fabric 入门做第一个模组"、"NeoForge 进阶 网络包"、"迁移到 26.1"'),
     level: z.string().optional().describe('可选：beginner / intermediate / advanced'),
+    path: z.string().optional().describe('可选：模组工程目录，传了自动体检并按工程系列排路线'),
+    series: z.string().optional().describe('可选：优先系列 A-F'),
+    loader: z.string().optional().describe('可选：fabric / forge / neoforge'),
+    mcVersion: z.string().optional().describe('可选：1.20.1 / 1.21.1 / 26.1'),
   },
-}, async ({ goal, level }) => {
-  const steps = planGoal(goal, level);
+}, async ({ goal, level, path, series, loader, mcVersion }) => {
+  const steps = planGoal(goal, level, { path, series, loader, mcVersion });
   const picks = [...new Set(steps.map((s) => s.series).filter(Boolean))];
   return text({
     goal, level: level || 'auto', route: steps,

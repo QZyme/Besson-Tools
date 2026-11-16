@@ -221,6 +221,7 @@ node tools/epic_skill.js          # 重新生成技能史诗章节（保留链�
 - 最新版本：MC 26.2（26.1.1/26.1.2 已发）；Fabric Loader 0.19.3；NeoForge 26.1 于 2026-03 适配
 
 ## 版本历史
+- **v2.4.6**：plan/lookup 支持工程优先——`besson_tutorial_plan` 可传 `path`（工程目录自动识别系列）或 `series/loader/mcVersion`，主线不再按字母取 A；`besson_tutorial_lookup` 支持同样参数过滤/加权，count 区分标题直接命中与元数据命中（titleTotal/metaTotal）；主题词按章节标题打分（泛词不再误入）；MCP 同步 11 工具参数
 - **v2.4.5**：工具缺陷修复——工程体检兼容 ModDevGradle 模板清单（src/main/templates）并正确识别多入口主类；中文映射输出合法 JSON；检索评分改为标题优先（lookup/plan 命中更准）；fetch 清理代码块行号残留
 - **v2.4.4**：面板新增「工具调用统计」（各工具调用次数 / 平均耗时 / 失败次数 / 最近使用，本机 usage.json 持久化；宿主 `GET /api/dsh-besson-tools/usage` 路由）；数据同步 2026-11-07（217 篇：212 章节 + 4 独立 + 1 总汇）
 - **v2.4.3**：左栏面板新增数据统计图表（系列分布/上下文开销/新鲜度）与实时刷新；预设增加模组开发工作流提示词。
