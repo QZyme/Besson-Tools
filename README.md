@@ -6,7 +6,7 @@
 [![site](https://img.shields.io/badge/site-Tomorrow--Land-0078d7)](https://beishanair.github.io/)
 
 > 北山Besson（BeiShan_Besson）Minecraft 模组开发教程站 [Tomorrow-Land](https://beishanair.github.io/) 的检索体系：
-> **DSH 技能（skill）· MCP 服务器（mcp）· DSH 插件（plugin）** 三件套（v2.3.0，适配 DeepSeek Harness 0.2.2-rc.1+）
+> **DSH 技能（skill）· MCP 服务器（mcp）· DSH 插件（plugin）** 三件套（v2.4.1，适配 DeepSeek Harness 0.2.2-rc.1+）
 > 数据同步日期：**2026-11-07**（站点文章 217 篇全覆盖：章节 212 + 独立文章 4 + 总汇页 1）
 > 站点：https://beishanair.github.io/ · 作者 B站：[@北山Besson](https://space.bilibili.com/489671468) · GitHub：[BeiShanair](https://github.com/BeiShanair)
 
@@ -26,11 +26,11 @@ Besson-Tools/
 │   ├── test-http.mjs                #    HTTP 冒烟测试
 │   └── package.json                 #    依赖清单（Release 的 mcp 包已自带）
 ├── dsh-plugin/                      # ③ DeepSeek Harness（DSH）插件
-│   ├── besson-tools.mjs             #    插件本体（零依赖，注册 11 个工具，v2.3.0）
+│   ├── besson-tools.mjs             #    插件本体（零依赖，注册 11 个工具，v2.4.1）
 │   ├── preset-files/                #    整预设安装时需要的文件
 │   │   └── preset.yml               #    预设元数据（名称/描述）
 │   └── agent.cordis.yml.snippet     #    往现有预设追加插件行时复制此片段
-├── client.js                        #    ④ Web UI 左栏入口面板（bundle 客户端模块，v2.3.0 新增）
+├── client.js                        #    ④ Web UI 左栏入口面板（bundle 客户端模块，实时数据，v2.4.1）
 └── tools/
     ├── index_data.json              # 教程索引数据（脚本与 MCP 服务器共用）
     ├── sync-data.mjs                # 站点数据更新脚本（重新生成 index_data.json / besson-tools.mjs）
@@ -49,7 +49,7 @@ cp -r skill ~/.dsh/skills/besson-tutorials
 #   cp -r skill <workspace>/.dsh/skills/besson-tutorials
 ```
 
-v2.3.0 技能内容（史诗级）：
+v2.4.1 技能内容（史诗级）：
 
 - **快速路由**：按「入门/1.21.1/最新版/专题/迁移」直接给出路线与章节锚点
 - **版本环境矩阵**：MC 版本 × Loader × JDK × 构建插件 × mod 清单 × 注册/事件方式
@@ -68,7 +68,7 @@ node mcp-server.mjs  # stdio 模式（默认；Release 的 besson-mcp 包已自�
 node mcp-server.mjs --http   # HTTP 模式（环境变量 PORT，默认 3987）
 ```
 
-MCP 服务器提供 **9 个工具**：
+MCP 服务器提供 **11 个工具**：
 
 | 工具 | 作用 | 示例参数 |
 |------|------|----------|
@@ -162,9 +162,9 @@ besson-tools.mjs    # ← 来自本包 dsh-plugin/
 
 1. 把 `besson-tools.mjs` 复制到你的预设目录（与 `agent.cordis.yml` 同级）
 2. 在 `agent.cordis.yml` 末尾追加 `agent.cordis.yml.snippet` 中的内容
-3. 重启会话即可拥有 9 个工具（v2.4.0）
+3. 重启会话即可拥有 11 个工具（v2.4.1）
 
-### 工具清单（插件与 MCP 完全一致，9 个）
+### 工具清单（插件与 MCP 完全一致，11 个）
 
 | 工具 | 作用 |
 |------|------|
@@ -177,16 +177,19 @@ besson-tools.mjs    # ← 来自本包 dsh-plugin/
 | `besson_tutorial_env` | 某 MC 版本 + Loader 的环境搭建清单与命令 |
 | `besson_mod_project` | 本地模组工程体检：加载器/版本/清单/主类/问题清单 |
 | `besson_mod_migrate` | 跨系列迁移清单：构建/清单/映射/注册/事件/数据生成 |
+| `besson_mod_scaffold` | 生成工程骨架：gradle 配置 / 主类 / mod 清单（Fabric·Forge·NeoForge） |
+| `besson_mod_mapping` | 中文 ↔ 官方映射名对照（31 条常用概念，含网络包/Mixin/BlockEntity 等） |
 
 系列字母：A=Fabric 1.20.1（Java 17）、B=Fabric 1.21.X（Java 21）、C=Forge 1.20.1（Java 17）、
 D=NeoForge 1.21.1（Java 21）、E=Fabric 26.1（Java 25）、F=NeoForge 26.1（待开）。
 
-> 提示：`besson_tutorial_index` 返回 `version` 字段（当前 2.0.0）与 `dataHealth`（正常 `totalChapters=190`），可确认运行版本与数据完好。
+> 提示：`besson_tutorial_index` 返回 `version` 字段（当前 2.4.1）与 `dataHealth`（正常 `totalChapters=212`），可确认运行版本与数据完好。
 
 ## 数据维护（站点更新后）
 
 ```bash
 node tools/sync-data.mjs          # 从站点重新抓取 → 重新生成 index_data.json / besson-tools.mjs
+node tools/update_stats.mjs       # 重新生成面板实时数据（lib/data/stats.json）
 node tools/epic_skill.js          # 重新生成技能史诗章节（保留链接），同步日期从 index_data.json 读取
 ```
 
@@ -195,7 +198,7 @@ node tools/epic_skill.js          # 重新生成技能史诗章节（保留链�
 
 ## 故障排查（插件"检索不到内容/返回 0 条"）
 
-1. 用仓库 `dsh-plugin/besson-tools.mjs`（或 Release 最新 `besson-plugin-v2.4.0.zip`）
+1. 用仓库 `dsh-plugin/besson-tools.mjs`（或 Release 最新 `besson-plugin-v2.4.1.zip`）
    覆盖安装位置的文件：
    - 0.1.x 旧式预设：`~/.dsh/.agent-presets/<你的预设id>/besson-tools.mjs`
    - 0.2.1+ 本地包：`<本地包目录>/besson-tools.mjs`（profile 内 `dsh.profile.bundles`/dependencies 安装的副本）
@@ -216,6 +219,8 @@ node tools/epic_skill.js          # 重新生成技能史诗章节（保留链�
 - 最新版本：MC 26.2（26.1.1/26.1.2 已发）；Fabric Loader 0.19.3；NeoForge 26.1 于 2026-03 适配
 
 ## 版本历史
+
+- **v2.4.1**：面板实时数据（`lib/data/stats.json`，浏览器端自动拉取刷新）；工具 9→11（`besson_mod_scaffold` 工程骨架 + `besson_mod_mapping` 中文映射）；左栏面板加载修复（bundle 补丁增加精确包名载体行）；DSH 0.2.2-rc.1
 
 - **v2.3.0**：新增「模组开发辅助」——`besson_mod_project`（本地工程体检）+ `besson_mod_migrate`（跨系列迁移清单），工具 7→9；Web 左栏入口面板（`client.js`，bundle 自带客户端模块）；SKILL.md 去重（497 行）并新增「模组开发辅助」小节；预设描述精简；适配 DSH 0.2.2-rc.1
 - **v2.2.0**：站点数据同步 2026-11-07（站点 217 篇）—— E 系列（Fabric 26.1）新增 #34~#43 共 10 章（流体/木头/树/世界生成/花/矿物/结构/生物群系/维度）；版本号 2.2.0，适配 DSH 0.2.2-rc.1
