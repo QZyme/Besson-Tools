@@ -1,9 +1,9 @@
-// 北山Besson 教程检索 MCP 服务器（v2.2.0 · 适配 DeepSeek Harness 0.2.2-rc.1）
+// 北山Besson 教程检索 MCP 服务器（v2.4.5 · 适配 DeepSeek Harness 0.2.2-rc.3）
 // 用法：
 //   stdio（默认）: node mcp-server.mjs
 //   HTTP        : node mcp-server.mjs --http   （环境变量 PORT，默认 3987）
 // 数据：默认读取 ../tools/index_data.json（仓库根目录），可用环境变量 BESSON_DATA_PATH 覆盖。
-// 7 个工具：lookup / index / series / fetch / plan / compare / env，与 dsh-plugin 能力对齐。
+// 11 个工具：lookup / index / series / fetch / plan / compare / env / mod_project / mod_migrate / mod_scaffold / mod_mapping，与 dsh-plugin 能力对齐。
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
@@ -15,7 +15,7 @@ import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const VERSION = '2.4.4';
+const VERSION = '2.4.5';
 
 // ── 数据加载 ──────────────────────────────────────────────────────────────
 function loadData() {
@@ -163,6 +163,7 @@ function planGoal(goal, level) {
   const wantsLatest = /26\.1|最新|新版本|前沿|新api/.test(g);
   const wantsAdvanced = /进阶|高级|网络|渲染|粒子|配方|rei|精炼|罐装|工具|附魔|结构|生物群系|维度|gui|声音/.test(g);
   const wantsMigrate = /迁移|升级|转版本|移植|对比/.test(g);
+
   const pick = [];
   if (wantsMigrate) pick.push('A', 'D');
   else if (wantsLatest) pick.push(wantsLoader === 'NeoForge' ? 'F' : 'E');
@@ -176,24 +177,37 @@ function planGoal(goal, level) {
   for (const id of pick) {
     const info = SERIES_INFO[id] || {};
     steps.push({
-      order: steps.length + 1, series: id, seriesName: (seriesMeta(id) || {}).name || id,
-      loader: info.loader, mc: info.mc, java: info.java, role: '主线',
+      order: steps.length + 1,
+      series: id,
+      seriesName: (seriesMeta(id) || {}).name || id,
+      loader: info.loader,
+      mc: info.mc,
+      java: info.java,
+      role: '主线',
       note: `按 ${id} 系列逐章推进；环境搭建用 besson_tutorial_env`,
     });
-    if (wantsAdvanced) {
-      for (const kw of ['网络', '渲染', 'gui', '粒子', '配方']) {
-        const hits = chapterMatches(id, kw, 2);
-        if (hits.length) {
-          const r = hits[0];
-          steps.push({ order: steps.length + 1, series: r.series, chapter: r.chapter, title: r.title, url: r.url, role: '专题' });
-        }
-      }
+    const topicSeen = new Set();
+    const topicTokens = tokenize(String(goal || '')).filter((t) => !/^(a|b|c|d|e|f|neoforge|forge|fabric|进阶|高级|入门|基础|新手|学习|教程|方式|\d+(\.\d+){1,3})$/.test(t));
+    const addTopic = (c) => {
+      const key = id + '#' + c.chapter;
+      if (topicSeen.has(key) || topicSeen.size >= 6) return;
+      topicSeen.add(key);
+      steps.push({ order: steps.length + 1, series: id, chapter: c.chapter, title: c.title, url: c.url, role: '专题' });
+    };
+    for (const t of topicTokens) {
+      for (const c of chapterMatches(id, t, 2)) addTopic(c);
+      if (t.length >= 2) for (const c of chapterMatches(id, t.slice(0, 2), 2)) addTopic(c);
+    }
+    if (topicSeen.size === 0) {
+      for (const c of chapterMatches(id, '第一个', 1)) addTopic(c);
     }
   }
   void level;
   return steps;
 }
 
+// 注意：DSH ToolRuntime 调用 output.render(args, value) —— 第一个实参是调用参数，
+// 第二个才是 execute 的返回值。不能写成交叉引用，否则调用方拿到的是空白/参数回显。
 function text(value) {
   return { content: [{ type: 'text', text: JSON.stringify(value, null, 2) }] };
 }
@@ -207,6 +221,7 @@ function htmlToText(html) {
   return frag
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
     .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<td[^>]*class="[^"]*(?:gutter|rouge-gutter)[^"]*"[^>]*>[\s\S]*?<\/td>/gi, ' ')
     .replace(/<!--[\s\S]*?-->/g, ' ')
     .replace(/<(?:h[1-6])[^>]*>/gi, '\n\n## ')
     .replace(/<p[^>]*>/gi, '\n\n')
@@ -478,11 +493,11 @@ function scanProject(pathArg) {
   if (existsSync(propsFile)) {
     const text = readFileSync(propsFile, 'utf8');
     for (const line of text.split(/\r?\n/)) {
-      const m = line.match(/^\s*([A-Za-z0-9_.-]+)\s*=\s*(.+)$/);
-      if (m && !m[1].startsWith('#')) gradleProps[m[1]] = m[2].trim();
+      const mm = line.match(/^\s*([A-Za-z0-9_.-]+)\s*=\s*(.+)$/);
+      if (mm && !mm[1].startsWith('#')) gradleProps[mm[1]] = mm[2].trim();
     }
     info.gradleProperties = Object.fromEntries(
-      Object.entries(gradleProps).filter(([k]) => /version|loader|mapping|moddev|toolchain|java/i.test(k))
+      Object.entries(gradleProps).filter(([k]) => /version|loader|mapping|moddev|toolchain|java/i.test(k)),
     );
   }
   let buildText = '';
@@ -501,26 +516,42 @@ function scanProject(pathArg) {
     const javaMatch = buildText.match(/JavaLanguageVersion\.of\((\d+)\)|languageVersion\s*=\s*[^\d]*(\d+)|JavaVersion\.VERSION_(\d+)/);
     if (javaMatch) info.javaToolchain = 'Java ' + (javaMatch[1] || javaMatch[2] || javaMatch[3]);
   }
-  const mc = gradleProps.minecraft_version || gradleProps.fabric_minecraft_version ||
-    (gradleProps.neoforge_version ? '1.21.1' : '') ||
-    ((buildText.match(/minecraft_version\s*=\s*['"]?([\w.]+)/) || [])[1] || '');
-  if (mc) info.minecraft = mc;
-  const resDir = join(base, 'src', 'main', 'resources');
+  let mc = gradleProps.minecraft_version || gradleProps.fabric_minecraft_version || '';
+  if (!mc && gradleProps.neoforge_version) {
+    const nm = String(gradleProps.neoforge_version).match(/^(\d+)\.(\d+)\./);
+    if (nm) mc = '1.' + nm[1] + '.' + nm[2];
+  }
+  if (!mc) {
+    const bm = buildText.match(/minecraft_version\s*=\s*['\"]([^'\"]+)['\"]/);
+    if (bm) mc = bm[1];
+  }
+  info.minecraft = mc || '';
   const modfiles = [];
-  for (const [file, loader] of [
-    [join(resDir, 'META-INF', 'neoforge.mods.toml'), 'neoforge'],
-    [join(resDir, 'META-INF', 'mods.toml'), 'forge'],
-    [join(resDir, 'fabric.mod.json'), 'fabric'],
+  const normPath = (p) => String(p).replace(/\\/g, '/');
+  const expandProp = (v) => {
+    const vm = String(v).match(/^\$\{([A-Za-z0-9_.-]+)\}$/);
+    return vm && gradleProps[vm[1]] != null ? String(gradleProps[vm[1]]) : String(v);
+  };
+  for (const [sub, rel, loader] of [
+    ['resources', 'META-INF/neoforge.mods.toml', 'neoforge'],
+    ['resources', 'META-INF/mods.toml', 'forge'],
+    ['resources', 'fabric.mod.json', 'fabric'],
+    ['templates', 'META-INF/neoforge.mods.toml', 'neoforge'],
+    ['templates', 'META-INF/mods.toml', 'forge'],
+    ['templates', 'fabric.mod.json', 'fabric'],
   ]) {
-    if (existsSync(file)) {
-      modfiles.push(file);
-      const text = readFileSync(file, 'utf8');
-      info.modfile = info.modfile || { file: file.split(/[\\/]/).pop(), loader };
+    const file = join(base, 'src', 'main', sub, ...rel.split('/'));
+    if (!existsSync(file)) continue;
+    modfiles.push(file);
+    const text = readFileSync(file, 'utf8');
+    if (!info.modfile) info.modfile = { file: rel, loader, template: sub === 'templates' };
+    if (info.modId == null) {
       const idMatch = text.match(/modId\s*=\s*"([^"]+)"/) || text.match(/"id"\s*:\s*"([^"]+)"/);
-      if (idMatch) info.modId = idMatch[1];
+      if (idMatch) info.modId = expandProp(idMatch[1]);
     }
   }
-  if (modfiles.length === 0) issues.push('src/main/resources 下没有 fabric.mod.json / META-INF/mods.toml / META-INF/neoforge.mods.toml');
+  info.modfiles = modfiles.map((f) => normPath(f).split(normPath(base) + '/').join(''));
+  if (modfiles.length === 0) issues.push('未找到 mod 清单：src/main/resources 或 src/main/templates 下没有 fabric.mod.json / META-INF/mods.toml / META-INF/neoforge.mods.toml');
   const javaFiles = [];
   const walk = (dir) => {
     if (!existsSync(dir)) return;
@@ -533,20 +564,31 @@ function scanProject(pathArg) {
   };
   walk(join(base, 'src', 'main', 'java'));
   info.javaFileCount = javaFiles.length;
-  let mainClass = null;
+  const entries = [];
   for (const p of javaFiles) {
     const text = readFileSync(p, 'utf8');
-    if (/@Mod\s*\(/.test(text) || /@EventBusSubscriber/.test(text) || /ModInitializer/.test(text)) {
-      mainClass = p.replace(/^.*src[\\/]main[\\/]java[\\/]/, '').replace(/\.java$/, '').replace(/[\\/]/g, '.');
-      break;
-    }
+    const clsMatch = text.match(/\bclass\s+([A-Za-z_$][\w$]*)/);
+    if (!clsMatch) continue;
+    const hasMod = /@Mod\s*\(/.test(text);
+    const hasInit = /ModInitializer/.test(text);
+    if (!hasMod && !hasInit) continue;
+    const cls = clsMatch[1];
+    const rel = p.replace(/^.*src[\\/]main[\\/]java[\\/]/, '').replace(/\.java$/, '').replace(/[\\/]/g, '.');
+    const isClient = /Client(Mod|Initializer)|Dist\.CLIENT|\.client\./i.test(text) || /Client$/.test(cls);
+    entries.push({ class: rel, kind: hasMod ? 'mod' : 'initializer', role: isClient ? 'client' : 'main', file: rel });
   }
-  if (mainClass) info.mainClass = mainClass;
-  else if (javaFiles.length) issues.push('src/main/java 中未找到 @Mod / ModInitializer 主类');
+  if (entries.length > 0) {
+    const mains = entries.filter((e) => e.role !== 'client');
+    info.mainClass = (mains[0] || entries[0]).class;
+    info.mainClasses = entries;
+    if (entries.length > 1) info.mainClassNote = '检测到多个入口类：' + entries.map((e) => e.class + '(' + e.role + ')').join(', ');
+  } else if (javaFiles.length) {
+    issues.push('src/main/java 中未找到 @Mod 注解或 ModInitializer 入口类');
+  }
   let matched = null;
   if (info.minecraft && (info.buildPlugins || []).length) {
     const loader = info.buildPlugins[0];
-    const candidates = DATA.series.filter((s) => String(info.minecraft).startsWith(String(s.mc || '').toLowerCase().replace(/\.x$/, '').slice(0, 4)) || String(info.minecraft).startsWith('1.21'));
+    const candidates = DATA.series.filter((s) => String(s.mc || '').toLowerCase().replace(/\.x$/, '') === String(info.minecraft).toLowerCase().replace(/\.x$/, '') || String(info.minecraft).startsWith('1.21'));
     matched = candidates.find((s) => String(s.loader || '').toLowerCase() === loader) || candidates[0] || null;
   }
   if (matched) {
@@ -566,7 +608,6 @@ function scanProject(pathArg) {
     next: ['besson_mod_migrate：从当前系列规划迁移', 'besson_tutorial_env：按匹配系列生成环境清单', 'besson_tutorial_series：查看该系列全部章节'],
   };
 }
-
 server.registerTool('besson_mod_project', {
   title: '模组工程体检（本地目录）',
   description: '检查本地 Minecraft 模组工程（目录 path）：识别加载器、MC 版本、Java 工具链、构建插件、mod 清单、主类与入口点，并给出常见问题与下一步建议。path 传项目根目录（含 build.gradle 或 gradle.properties 的目录）。',
