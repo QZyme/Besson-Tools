@@ -1,4 +1,4 @@
-// 北山Besson 教程检索 MCP 服务器（v2.4.6 · 适配 DeepSeek Harness 0.2.2-rc.3）
+// 北山Besson 教程检索 MCP 服务器（v2.5.0 · 适配 DeepSeek Harness 0.2.2-rc.3）
 // 用法：
 //   stdio（默认）: node mcp-server.mjs
 //   HTTP        : node mcp-server.mjs --http   （环境变量 PORT，默认 3987）
@@ -15,7 +15,7 @@ import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const VERSION = '2.4.6';
+const VERSION = '2.5.0';
 
 // ── 数据加载 ──────────────────────────────────────────────────────────────
 function loadData() {

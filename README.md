@@ -134,6 +134,9 @@ HTTP 模式接入地址：`http://127.0.0.1:3987/mcp`（Streamable HTTP，会话
 
 ### 方式 B：0.2.1+ 声明式预设（本地包挂载）
 
+> v2.5.0 起「Besson 教程助手」预设已**内置于插件 bundle**——用方式 0/1 安装插件即自动出现，本方式仅在你需要自定义预设（或使用旧 DSH 版本）时参考；手动挂载时请先删除内置预设（同 id）避免重复。
+
+
 1. 新建本地包目录（如 `~/dsh-besson-tools/` 或任意目录），放入：
 
 ```
@@ -221,6 +224,7 @@ node tools/epic_skill.js          # 重新生成技能史诗章节（保留链�
 - 最新版本：MC 26.2（26.1.1/26.1.2 已发）；Fabric Loader 0.19.3；NeoForge 26.1 于 2026-03 适配
 
 ## 版本历史
+- **v2.5.0**：插件包内置「Besson 教程助手」agent 预设（persona 工作流 + 11 工具集），**安装插件即自动出现**，无需手动改 profile；bundle patch 含预设定义（与本地同 id 预设重复时会自动跳过，不会重复注册）。
 - **v2.4.6**：plan/lookup 支持工程优先——`besson_tutorial_plan` 可传 `path`（工程目录自动识别系列）或 `series/loader/mcVersion`，主线不再按字母取 A；`besson_tutorial_lookup` 支持同样参数过滤/加权，count 区分标题直接命中与元数据命中（titleTotal/metaTotal）；主题词按章节标题打分（泛词不再误入）；MCP 同步 11 工具参数
 - **v2.4.5**：工具缺陷修复——工程体检兼容 ModDevGradle 模板清单（src/main/templates）并正确识别多入口主类；中文映射输出合法 JSON；检索评分改为标题优先（lookup/plan 命中更准）；fetch 清理代码块行号残留
 - **v2.4.4**：面板新增「工具调用统计」（各工具调用次数 / 平均耗时 / 失败次数 / 最近使用，本机 usage.json 持久化；宿主 `GET /api/dsh-besson-tools/usage` 路由）；数据同步 2026-11-07（217 篇：212 章节 + 4 独立 + 1 总汇）

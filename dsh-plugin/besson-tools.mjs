@@ -1,4 +1,4 @@
-// 北山Besson（BeiShan_Besson）Minecraft 模组开发助手 · DSH 插件（v2.4.6 · 适配 DeepSeek Harness 0.2.2-rc.3）
+// 北山Besson（BeiShan_Besson）Minecraft 模组开发助手 · DSH 插件（v2.5.0 · 适配 DeepSeek Harness 0.2.2-rc.3）
 // 数据与本仓库 skill/SKILL.md 同步（站点 217 篇文章全覆盖：章节 212 + 独立文章 4 + 总汇页 1）。
 // 零依赖：只 import node 内置模块，不依赖任何 npm 包。
 // 11 个工具：lookup / index / series / fetch / plan / compare / env / mod_project / mod_migrate / mod_scaffold / mod_mapping —— 检索、导航、路线规划、版本对比、环境搭建、工程体检、迁移清单、骨架生成、中文映射对照。
@@ -11,7 +11,7 @@ const DATA = {"site":"https://beishanair.github.io/","author":"BeiShan_Besson","
 
 const JAVA = { A: 'Java 17', B: 'Java 21', C: 'Java 17', D: 'Java 21', E: 'Java 25', F: 'Java 25' };
 const GAPS = { A: [], B: ['54（本站无 #54）'], C: ['22-27（未发布）'], D: ['13-24（未发布）'], E: [], F: ['全系列待开'] };
-const VERSION = '2.4.6';
+const VERSION = '2.5.0';
 
 // 系列画像：compare / env / plan 共用。只写有把握的定性事实，不写易过期的精确小版本号。
 const SERIES_INFO = {
