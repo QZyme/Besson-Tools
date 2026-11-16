@@ -62,10 +62,21 @@
         var state = React.useState({ status: 'loading', data: { synced: '2026-11-07', chapters: 212, standalone: 4, totalArticles: 217, series: SERIES_FALLBACK }, at: '' })
         var set = state[1]
         var load = function (bust) {
-          fetch(STATS_URL + (bust ? '?t=' + Date.now() : ''), { cache: bust ? 'no-store' : 'default' })
-            .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json() })
-            .then(function (d) { set({ status: 'ok', data: d, at: new Date().toLocaleString() }) })
-            .catch(function () { set(function (prev) { return { status: prev.status === 'ok' ? 'stale' : 'error', data: prev.data, at: prev.at } }) })
+          var urls = [
+            STATS_URL + (bust ? '?t=' + Date.now() : ''),
+            'https://cdn.jsdelivr.net/gh/QZyme/dsh-besson-tools@main/lib/data/stats.json' + (bust ? '?t=' + Date.now() : ''),
+          ];
+          var tryNext = function (i) {
+            if (i >= urls.length) {
+              set(function (prev) { return { status: prev.status === 'ok' ? 'stale' : 'error', data: prev.data, at: prev.at } })
+              return
+            }
+            fetch(urls[i], { cache: bust ? 'no-store' : 'default' })
+              .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json() })
+              .then(function (d) { set({ status: 'ok', data: d, at: new Date().toLocaleString() }) })
+              .catch(function () { tryNext(i + 1) })
+          }
+          tryNext(0)
         }
         React.useEffect(function () { load(false) }, [])
         return [state[0], load]

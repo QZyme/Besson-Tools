@@ -15,7 +15,7 @@ import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const VERSION = '2.4.1';
+const VERSION = '2.4.2';
 
 // ── 数据加载 ──────────────────────────────────────────────────────────────
 function loadData() {
