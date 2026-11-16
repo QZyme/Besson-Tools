@@ -6,7 +6,7 @@
 [![site](https://img.shields.io/badge/site-Tomorrow--Land-0078d7)](https://beishanair.github.io/)
 
 > 北山Besson（BeiShan_Besson）Minecraft 模组开发教程站 [Tomorrow-Land](https://beishanair.github.io/) 的检索体系：
-> **DSH 技能（skill）· MCP 服务器（mcp）· DSH 插件（plugin）** 三件套（v2.2.0，适配 DeepSeek Harness 0.2.2-rc.1+）
+> **DSH 技能（skill）· MCP 服务器（mcp）· DSH 插件（plugin）** 三件套（v2.3.0，适配 DeepSeek Harness 0.2.2-rc.1+）
 > 数据同步日期：**2026-11-07**（站点文章 217 篇全覆盖：章节 212 + 独立文章 4 + 总汇页 1）
 > 站点：https://beishanair.github.io/ · 作者 B站：[@北山Besson](https://space.bilibili.com/489671468) · GitHub：[BeiShanair](https://github.com/BeiShanair)
 
@@ -17,23 +17,24 @@ Besson-Tools/
 ├── README.md                        # 本文件
 ├── LICENSE                          # CC BY-NC-SA 4.0
 ├── skill/                           # ① DSH 技能（SKILL 技能文件，也可作为其他工具的知识库）
-│   ├── SKILL.md                     #    技能主文件：快速路由 + 环境矩阵 + 迁移指南 + 坑点 + FAQ + 207 篇索引
+│   ├── SKILL.md                     #    技能主文件：快速路由 + 环境矩阵 + 迁移指南 + 坑点 + FAQ + 217 篇索引
 │   └── references/
 │       └── version-matrix.md        #    版本矩阵（JDK/Loader/构建系统，官方源核实）
 ├── mcp/                             # ② MCP 服务器（任何支持 MCP 的客户端都能用）
-│   ├── mcp-server.mjs               #    stdio（默认）或 HTTP（--http）双模式，7 个工具
+│   ├── mcp-server.mjs               #    stdio（默认）或 HTTP（--http）双模式，9 个工具
 │   ├── test-client.mjs              #    stdio 端到端测试
 │   ├── test-http.mjs                #    HTTP 冒烟测试
 │   └── package.json                 #    依赖清单（Release 的 mcp 包已自带）
 ├── dsh-plugin/                      # ③ DeepSeek Harness（DSH）插件
-│   ├── besson-tools.mjs             #    插件本体（零依赖，注册 7 个工具，v2.0.0）
+│   ├── besson-tools.mjs             #    插件本体（零依赖，注册 9 个工具，v2.3.0）
 │   ├── preset-files/                #    整预设安装时需要的文件
 │   │   └── preset.yml               #    预设元数据（名称/描述）
 │   └── agent.cordis.yml.snippet     #    往现有预设追加插件行时复制此片段
+├── client.js                        #    ④ Web UI 左栏入口面板（bundle 客户端模块，v2.3.0 新增）
 └── tools/
     ├── index_data.json              # 教程索引数据（脚本与 MCP 服务器共用）
     ├── sync-data.mjs                # 站点数据更新脚本（重新生成 index_data.json / besson-tools.mjs）
-    ├── epic_skill.js                # 技能史诗化脚本（把增强章节注入 SKILL.md，保留 207 条链接）
+    ├── epic_skill.js                # 技能史诗化脚本（把增强章节注入 SKILL.md，保留 217 条链接）
     └── plugin-test.mjs              # 插件全工具冒烟测试（模拟 DSH registry）
 ```
 
@@ -48,15 +49,15 @@ cp -r skill ~/.dsh/skills/besson-tutorials
 #   cp -r skill <workspace>/.dsh/skills/besson-tutorials
 ```
 
-v2.0.0 技能内容（史诗级）：
+v2.3.0 技能内容（史诗级）：
 
 - **快速路由**：按「入门/1.21.1/最新版/专题/迁移」直接给出路线与章节锚点
 - **版本环境矩阵**：MC 版本 × Loader × JDK × 构建插件 × mod 清单 × 注册/事件方式
 - **迁移指南**：Forge→NeoForge、1.20.1→1.21.1、1.21.1→26.1 的包名/清单/构建/注册差异
-- **标准工作流 + 高频坑点 Top 10 + 生态速查 + FAQ + 7 工具用法**
-- 保留完整 207 篇文章索引（A-F 六系列 + 4 篇独立文章 + 总汇页）
+- **标准工作流 + 高频坑点 Top 10 + 生态速查 + FAQ + 9 工具用法**
+- 保留完整 217 篇文章索引（A-F 六系列 + 4 篇独立文章 + 总汇页）
 
-使用效果：加载后直接掌握教程站全部 207 篇文章的索引，能按"版本 + 主题"给出教程链接、
+使用效果：加载后直接掌握教程站全部 217 篇文章的索引，能按"版本 + 主题"给出教程链接、
 按目标生成学习路线、对比不同版本工程差异、生成环境搭建清单，并抓取文章正文。
 
 ## ② 作为 MCP 服务器使用（mcp）
@@ -67,7 +68,7 @@ node mcp-server.mjs  # stdio 模式（默认；Release 的 besson-mcp 包已自�
 node mcp-server.mjs --http   # HTTP 模式（环境变量 PORT，默认 3987）
 ```
 
-MCP 服务器提供 **7 个工具**：
+MCP 服务器提供 **9 个工具**：
 
 | 工具 | 作用 | 示例参数 |
 |------|------|----------|
@@ -78,6 +79,8 @@ MCP 服务器提供 **7 个工具**：
 | `besson_tutorial_plan` | **按目标生成学习路线**（新手/进阶/迁移/26.1） | `goal: "NeoForge 进阶 网络包"` |
 | `besson_tutorial_compare` | **两系列/版本工程与 API 差异对比** | `a: "A", b: "D"` |
 | `besson_tutorial_env` | **环境搭建清单与命令**（JDK/Gradle/模板/坑） | `mcVersion: "1.21.1", loader: "neoforge"` |
+| `besson_mod_project` | **本地工程体检**（加载器/版本/清单/主类/问题） | `path: "C:/my-mod"` |
+| `besson_mod_migrate` | **跨系列迁移清单**（构建/清单/映射/注册/事件） | `from: "A", to: "D"` |
 
 `besson_tutorial_fetch` 例：传 `query` 时按本地索引自动解析最匹配的一篇并抓取；传 `url` 时直接抓取该页。
 返回标题、正文纯文本（含代码块）与字节数；仅接受 `beishanair.github.io` 站内 https 链接，可用 `maxChars` 限制返回长度。
@@ -112,7 +115,7 @@ HTTP 模式接入地址：`http://127.0.0.1:3987/mcp`（Streamable HTTP，会话
 2. 输入 GitHub 仓库地址：
    `https://github.com/QZyme/dsh-besson-tools`
    （或本仓库源码目录、或本包解压目录）
-3. 安装后（bundle 形态）重启或新开会话即可使用 7 个 `besson_tutorial_*` 工具
+3. 安装后（bundle 形态）重启或新开会话即可使用 9 个 `besson_*` 工具（7 个教程 + 2 个开发辅助），左上栏会出现「北山 Besson 模组助手」入口面板
 
 > 注意：插件栏安装为**全局挂载**（所有会话可用）。若只想在 Besson 预设里使用，请用方式 B（预设行挂载）；两种方式不要同时启用，避免重复注册。
 
@@ -159,9 +162,9 @@ besson-tools.mjs    # ← 来自本包 dsh-plugin/
 
 1. 把 `besson-tools.mjs` 复制到你的预设目录（与 `agent.cordis.yml` 同级）
 2. 在 `agent.cordis.yml` 末尾追加 `agent.cordis.yml.snippet` 中的内容
-3. 重启会话即可拥有 7 个工具（v2.0.0）
+3. 重启会话即可拥有 9 个工具（v2.3.0）
 
-### 工具清单（插件与 MCP 完全一致，7 个）
+### 工具清单（插件与 MCP 完全一致，9 个）
 
 | 工具 | 作用 |
 |------|------|
@@ -172,6 +175,8 @@ besson-tools.mjs    # ← 来自本包 dsh-plugin/
 | `besson_tutorial_plan` | 按目标生成学习路线（新手/进阶/neoforge/forge/迁移/26.1） |
 | `besson_tutorial_compare` | 两系列/版本工程与 API 差异对比 |
 | `besson_tutorial_env` | 某 MC 版本 + Loader 的环境搭建清单与命令 |
+| `besson_mod_project` | 本地模组工程体检：加载器/版本/清单/主类/问题清单 |
+| `besson_mod_migrate` | 跨系列迁移清单：构建/清单/映射/注册/事件/数据生成 |
 
 系列字母：A=Fabric 1.20.1（Java 17）、B=Fabric 1.21.X（Java 21）、C=Forge 1.20.1（Java 17）、
 D=NeoForge 1.21.1（Java 21）、E=Fabric 26.1（Java 25）、F=NeoForge 26.1（待开）。
@@ -186,11 +191,11 @@ node tools/epic_skill.js          # 重新生成技能史诗章节（保留链�
 ```
 
 脚本会自动抓取站点归档页/标签页，重建完整索引并注入插件模块。技能文件 `skill/SKILL.md`
-的 207 条链接表格保持不变，史诗章节由 `epic_skill.js` 注入。
+的 217 条链接表格保持不变，史诗章节由 `epic_skill.js` 注入。
 
 ## 故障排查（插件"检索不到内容/返回 0 条"）
 
-1. 用仓库 `dsh-plugin/besson-tools.mjs`（或 Release 最新 `besson-plugin-v2.0.0.zip`）
+1. 用仓库 `dsh-plugin/besson-tools.mjs`（或 Release 最新 `besson-plugin-v2.3.0.zip`）
    覆盖安装位置的文件：
    - 0.1.x 旧式预设：`~/.dsh/.agent-presets/<你的预设id>/besson-tools.mjs`
    - 0.2.1+ 本地包：`<本地包目录>/besson-tools.mjs`（profile 内 `dsh.profile.bundles`/dependencies 安装的副本）
@@ -212,6 +217,7 @@ node tools/epic_skill.js          # 重新生成技能史诗章节（保留链�
 
 ## 版本历史
 
+- **v2.3.0**：新增「模组开发辅助」——`besson_mod_project`（本地工程体检）+ `besson_mod_migrate`（跨系列迁移清单），工具 7→9；Web 左栏入口面板（`client.js`，bundle 自带客户端模块）；SKILL.md 去重（497 行）并新增「模组开发辅助」小节；预设描述精简；适配 DSH 0.2.2-rc.1
 - **v2.2.0**：站点数据同步 2026-11-07（站点 217 篇）—— E 系列（Fabric 26.1）新增 #34~#43 共 10 章（流体/木头/树/世界生成/花/矿物/结构/生物群系/维度）；版本号 2.2.0，适配 DSH 0.2.2-rc.1
 - **v2.1.0**：站点数据同步 2026-10-29（站点 207 篇）—— E 系列（Fabric 26.1）新增 #22~#33 共 12 章；数据、版本号全面对齐
 - **v2.0.0**：史诗级增强 —— 插件与 MCP 各 7 工具（新增 plan/compare/env）；技能新增快速路由、环境矩阵、迁移指南、坑点 Top 10、FAQ、工具链；适配 DSH 0.2.1-rc.2（声明式预设 + 本地包挂载 + skill-filesystem 技能目录）；数据同步 2026-10-19（195 篇）

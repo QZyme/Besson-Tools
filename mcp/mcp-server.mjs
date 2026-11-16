@@ -4,7 +4,7 @@
 //   HTTP        : node mcp-server.mjs --http   （环境变量 PORT，默认 3987）
 // 数据：默认读取 ../tools/index_data.json（仓库根目录），可用环境变量 BESSON_DATA_PATH 覆盖。
 // 7 个工具：lookup / index / series / fetch / plan / compare / env，与 dsh-plugin 能力对齐。
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -15,7 +15,7 @@ import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const VERSION = '2.2.0';
+const VERSION = '2.3.0';
 
 // ── 数据加载 ──────────────────────────────────────────────────────────────
 function loadData() {
@@ -294,6 +294,8 @@ server.registerTool('besson_tutorial_index', {
     besson_tutorial_plan: '按目标生成学习路线（新手/进阶/迁移/26.1 前沿）',
     besson_tutorial_compare: '两个系列/版本的 API 与工程差异对比',
     besson_tutorial_env: '某 MC 版本 + Loader 的环境搭建清单与命令',
+    besson_mod_project: '检查本地模组工程：加载器/版本/清单/主类/常见问题',
+    besson_mod_migrate: '跨系列迁移清单：映射/构建插件/注册/事件/清单文件',
   },
 }));
 
@@ -459,6 +461,168 @@ server.registerTool('besson_tutorial_env', {
       '改完注册代码没重启客户端 → 看不到新内容（注册发生在启动期）',
     ],
     next: ['besson_tutorial_series：列出该系列全部章节', 'besson_tutorial_fetch：抓取第一章正文动手'],
+  });
+});
+
+
+// ── 模组工程体检与迁移（v2.3.0 新增，Node 侧可读本地文件）────────────────
+function scanProject(pathArg) {
+  const base = pathArg ? resolve(String(pathArg)) : resolve('.');
+  if (!existsSync(base)) return { error: '目录不存在：' + base };
+  const issues = [];
+  const info = { path: base };
+  const gradleProps = {};
+  const propsFile = join(base, 'gradle.properties');
+  if (existsSync(propsFile)) {
+    const text = readFileSync(propsFile, 'utf8');
+    for (const line of text.split(/\r?\n/)) {
+      const m = line.match(/^\s*([A-Za-z0-9_.-]+)\s*=\s*(.+)$/);
+      if (m && !m[1].startsWith('#')) gradleProps[m[1]] = m[2].trim();
+    }
+    info.gradleProperties = Object.fromEntries(
+      Object.entries(gradleProps).filter(([k]) => /version|loader|mapping|moddev|toolchain|java/i.test(k))
+    );
+  }
+  let buildText = '';
+  for (const name of ['build.gradle.kts', 'build.gradle']) {
+    const f = join(base, name);
+    if (existsSync(f)) { buildText = readFileSync(f, 'utf8'); info.buildFile = name; break; }
+  }
+  if (!buildText) issues.push('未找到 build.gradle / build.gradle.kts —— 可能不是 Gradle 工程');
+  else {
+    const plugins = [];
+    if (/net\.neoforged\.moddev|net\.neoforged\.gradle\.userdev|neoforge/i.test(buildText)) plugins.push('neoforge');
+    if (/fabric-loom|fabric-loader/i.test(buildText) || typeof gradleProps.fabric_loader_version === 'string') plugins.push('fabric');
+    if (/net\.minecraftforge\.gradle|forgegradle/i.test(buildText)) plugins.push('forge');
+    if (plugins.length === 0) issues.push('无法从构建文件识别加载器插件（fabric-loom / ForgeGradle / NeoGradle / ModDevGradle）');
+    info.buildPlugins = plugins;
+    const javaMatch = buildText.match(/JavaLanguageVersion\.of\((\d+)\)|languageVersion\s*=\s*[^\d]*(\d+)|JavaVersion\.VERSION_(\d+)/);
+    if (javaMatch) info.javaToolchain = 'Java ' + (javaMatch[1] || javaMatch[2] || javaMatch[3]);
+  }
+  const mc = gradleProps.minecraft_version || gradleProps.fabric_minecraft_version ||
+    (gradleProps.neoforge_version ? '1.21.1' : '') ||
+    ((buildText.match(/minecraft_version\s*=\s*['"]?([\w.]+)/) || [])[1] || '');
+  if (mc) info.minecraft = mc;
+  const resDir = join(base, 'src', 'main', 'resources');
+  const modfiles = [];
+  for (const [file, loader] of [
+    [join(resDir, 'META-INF', 'neoforge.mods.toml'), 'neoforge'],
+    [join(resDir, 'META-INF', 'mods.toml'), 'forge'],
+    [join(resDir, 'fabric.mod.json'), 'fabric'],
+  ]) {
+    if (existsSync(file)) {
+      modfiles.push(file);
+      const text = readFileSync(file, 'utf8');
+      info.modfile = info.modfile || { file: file.split(/[\\/]/).pop(), loader };
+      const idMatch = text.match(/modId\s*=\s*"([^"]+)"/) || text.match(/"id"\s*:\s*"([^"]+)"/);
+      if (idMatch) info.modId = idMatch[1];
+    }
+  }
+  if (modfiles.length === 0) issues.push('src/main/resources 下没有 fabric.mod.json / META-INF/mods.toml / META-INF/neoforge.mods.toml');
+  const javaFiles = [];
+  const walk = (dir) => {
+    if (!existsSync(dir)) return;
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name);
+      const st = statSync(p);
+      if (st.isDirectory()) walk(p);
+      else if (/\.java$/.test(name)) javaFiles.push(p);
+    }
+  };
+  walk(join(base, 'src', 'main', 'java'));
+  info.javaFileCount = javaFiles.length;
+  let mainClass = null;
+  for (const p of javaFiles) {
+    const text = readFileSync(p, 'utf8');
+    if (/@Mod\s*\(/.test(text) || /@EventBusSubscriber/.test(text) || /ModInitializer/.test(text)) {
+      mainClass = p.replace(/^.*src[\\/]main[\\/]java[\\/]/, '').replace(/\.java$/, '').replace(/[\\/]/g, '.');
+      break;
+    }
+  }
+  if (mainClass) info.mainClass = mainClass;
+  else if (javaFiles.length) issues.push('src/main/java 中未找到 @Mod / ModInitializer 主类');
+  let matched = null;
+  if (info.minecraft && (info.buildPlugins || []).length) {
+    const loader = info.buildPlugins[0];
+    const candidates = DATA.series.filter((s) => String(info.minecraft).startsWith(String(s.mc || '').toLowerCase().replace(/\.x$/, '').slice(0, 4)) || String(info.minecraft).startsWith('1.21'));
+    matched = candidates.find((s) => String(s.loader || '').toLowerCase() === loader) || candidates[0] || null;
+  }
+  if (matched) {
+    info.matchedSeries = { id: matched.id, name: matched.name, mc: matched.mc, loader: matched.loader, java: JAVA[matched.id] };
+    const expectJava = String(SERIES_INFO[matched.id].jdk || '');
+    const actualJava = (info.javaToolchain || '').match(/(\d+)/);
+    if (expectJava && actualJava && actualJava[1] !== expectJava) {
+      issues.push('Java 工具链 ' + info.javaToolchain + ' 与站点预期 Java ' + expectJava + ' 不一致（' + matched.id + ' 系列）');
+    }
+  } else if (info.minecraft) {
+    issues.push('MC 版本 ' + info.minecraft + ' 未匹配到教程系列（A 1.20.1 / B 1.21.X / C 1.20.1 Forge / D 1.21.1 / E 26.1 / F 26.1）');
+  }
+  return {
+    ...info,
+    issues,
+    ok: issues.length === 0,
+    next: ['besson_mod_migrate：从当前系列规划迁移', 'besson_tutorial_env：按匹配系列生成环境清单', 'besson_tutorial_series：查看该系列全部章节'],
+  };
+}
+
+server.registerTool('besson_mod_project', {
+  title: '模组工程体检（本地目录）',
+  description: '检查本地 Minecraft 模组工程（目录 path）：识别加载器、MC 版本、Java 工具链、构建插件、mod 清单、主类与入口点，并给出常见问题与下一步建议。path 传项目根目录（含 build.gradle 或 gradle.properties 的目录）。',
+  inputSchema: {
+    path: z.string().optional().describe('模组工程根目录（绝对路径；缺省为当前工作目录）'),
+  },
+}, async ({ path: pathArg }) => text(scanProject(pathArg)));
+
+server.registerTool('besson_mod_migrate', {
+  title: '跨系列迁移清单',
+  description: '生成两个教程系列（或 MC 版本 / Loader）之间的迁移清单：Java 升级、构建插件替换、mod 清单文件替换、包名/映射变化、注册方式与事件系统差异、数据生成迁移，附教程迁移章节链接。from/to 传系列字母（A-F）或关键词（如 1.20.1、1.21.1、26.1、fabric、forge、neoforge）。',
+  inputSchema: {
+    from: z.string().describe('当前系列：A-F 或关键词'),
+    to: z.string().describe('目标系列：A-F 或关键词'),
+    level: z.string().optional().describe('可选：beginner / intermediate / advanced'),
+  },
+}, async ({ from, to, level }) => {
+  const sa = resolveSeries(from);
+  const sb = resolveSeries(to);
+  if (!sa || !sb) {
+    return text({ error: '无法解析：from=' + from + ', to=' + to + '。可用系列 A-F 或 1.20.1 / 1.21.1 / 26.1 / fabric / forge / neoforge' });
+  }
+  if (sa.id === sb.id) return text({ error: 'from 与 to 是同一系列 ' + sa.id + '，无需迁移' });
+  const ia = SERIES_INFO[sa.id] || {};
+  const ib = SERIES_INFO[sb.id] || {};
+  const diff = {};
+  for (const k of ['mc', 'loader', 'java', 'jdk', 'build', 'pkg', 'modfile', 'entrypoint', 'registry', 'events', 'datagen']) {
+    if ((ia[k] || '') !== (ib[k] || '')) diff[k] = { from: ia[k] || '', to: ib[k] || '' };
+  }
+  const steps = [];
+  const push = (topic, detail) => steps.push({ order: steps.length + 1, topic, detail });
+  push('Java 版本与工具链', 'JDK 从 ' + (ia.jdk || '?') + ' 升级到 ' + (ib.jdk || '?') + '；修改 gradle 的 Java toolchain 与 IDE SDK。');
+  push('构建插件与 Gradle 配置', '替换构建插件：' + (ia.build || '') + ' → ' + (ib.build || '') + '；同步更新 gradle.properties 中的版本字段。');
+  push('mod 清单文件', '清单文件从 ' + (ia.modfile || '') + ' 换成 ' + (ib.modfile || '') + '；loader 字段与依赖版本同步修改。');
+  push('包名与映射', '映射从 ' + (ia.pkg || '') + ' 变为 ' + (ib.pkg || '') + '；全局替换 import 前检查映射差异。');
+  push('注册方式', (ia.registry || '') + ' → ' + (ib.registry || '') + '；注意注册事件/持有者写法差异。');
+  push('事件系统', (ia.events || '') + ' → ' + (ib.events || '') + '；事件注解与监听注册方式不同。');
+  push('数据生成', (ia.datagen || '') + ' → ' + (ib.datagen || '') + '；生成器入口与输出目录检查。');
+  push('入口点', (ia.entrypoint || '') + ' → ' + (ib.entrypoint || '') + '；主类结构与初始化时机核对。');
+  let refs = [];
+  for (const id of [sa.id, sb.id]) {
+    for (const kw of ['迁移', '环境', '第一个', '配置', '升级']) {
+      for (const c of chapterMatches(id, kw, 2)) refs.push(c);
+    }
+  }
+  const seen = new Set();
+  refs = refs.filter((c) => { const key = c.series + '#' + c.chapter; if (seen.has(key)) return false; seen.add(key); return true; });
+  void level;
+  return text({
+    from: { series: sa.id, name: sa.name, mc: ia.mc, loader: ia.loader, java: ia.java },
+    to: { series: sb.id, name: sb.name, mc: ib.mc, loader: ib.loader, java: ib.java },
+    javaSteps: (ia.java || '') + ' → ' + (ib.java || ''),
+    diff,
+    steps,
+    refs,
+    templates: { [sa.id]: TEMPLATES[sa.id], [sb.id]: TEMPLATES[sb.id] },
+    note: '迁移节奏：先在构建期打通（Gradle/清单/主类可编译），再逐模块迁移注册与事件；F 系列（NeoForge 26.1）未开更，26.1 只参照 E。',
+    version: VERSION,
   });
 });
 

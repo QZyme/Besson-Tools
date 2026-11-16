@@ -38,4 +38,8 @@ const env = await call('besson_tutorial_env', { mcVersion: '26.1', loader: 'fabr
 check(env.series === 'E' && env.jdk === '25', 'env series=' + env.series);
 const empt = await call('besson_tutorial_lookup', { query: '' });
 check(empt.hint === '请输入查询关键词', 'empty query hint=' + JSON.stringify(empt.hint));
+const mig = await call('besson_mod_migrate', { from: 'A', to: 'D' });
+check(mig.steps.length === 8 && mig.javaSteps === 'Java 17 → Java 21', 'migrate steps=' + mig.steps.length + ' java=' + mig.javaSteps);
+const proj = await call('besson_mod_project', { path: 'C:/Users/12899/AppData/Local/Temp/fixture-neoforge' });
+check(proj.matchedSeries && proj.matchedSeries.id === 'D' && proj.ok === true, 'project matched=' + (proj.matchedSeries && proj.matchedSeries.id));
 process.exitCode = fail ? 1 : 0;

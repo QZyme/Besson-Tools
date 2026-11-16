@@ -1,13 +1,16 @@
-// 北山Besson（BeiShan_Besson）Minecraft 模组开发教程 · DSH 插件（v2.2.0 · 适配 DeepSeek Harness 0.2.2-rc.1）
+// 北山Besson（BeiShan_Besson）Minecraft 模组开发助手 · DSH 插件（v2.3.0 · 适配 DeepSeek Harness 0.2.2-rc.1）
 // 数据与本仓库 skill/SKILL.md 同步（站点 217 篇文章全覆盖：章节 212 + 独立文章 4 + 总汇页 1）。
-// 零依赖：不 import 任何包，直接向 ctx.tools 注册工具。
-// 7 个工具：lookup / index / series / fetch / plan / compare / env —— 检索、导航、路线规划、版本对比、环境搭建。
+// 零依赖：只 import node 内置模块，不依赖任何 npm 包。
+// 9 个工具：lookup / index / series / fetch / plan / compare / env / mod_project / mod_migrate —— 检索、导航、路线规划、版本对比、环境搭建、工程体检、迁移清单。
+
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 
 const DATA = {"site":"https://beishanair.github.io/","author":"BeiShan_Besson","synced":"2026-11-07","series":[{"id":"A","name":"Fabric 1.20.1 长线教程计划","loader":"Fabric","mc":"1.20.1","tag":"Fabric-1-20","chapters":[{"n":"1","title":"开发环境配置","url":"https://beishanair.github.io/2025/04/15/120/start120/"},{"n":"2","title":"第一个物品","url":"https://beishanair.github.io/2025/04/16/120/item120/"},{"n":"3","title":"创造模式物品栏","url":"https://beishanair.github.io/2025/04/17/120/itemgroup120/"},{"n":"4","title":"第一个方块","url":"https://beishanair.github.io/2025/04/20/120/block120/"},{"n":"5","title":"战利品列表","url":"https://beishanair.github.io/2025/04/21/120/loot120/"},{"n":"6","title":"配方","url":"https://beishanair.github.io/2025/04/22/120/recipe120/"},{"n":"7","title":"数据生成","url":"https://beishanair.github.io/2025/04/25/120/datagen120/"},{"n":"8","title":"食物","url":"https://beishanair.github.io/2025/05/06/120/food120/"},{"n":"9","title":"燃料","url":"https://beishanair.github.io/2025/05/06/120/fuel120/"},{"n":"10","title":"Tags·标签","url":"https://beishanair.github.io/2025/05/07/120/tag120/"},{"n":"11","title":"Jar打包","url":"https://beishanair.github.io/2025/05/07/120/jar120/"},{"n":"12","title":"建材类方块","url":"https://beishanair.github.io/2025/05/07/120/build120/"},{"n":"13","title":"DeepSeek IDEA部署","url":"https://beishanair.github.io/2025/05/08/120/ds120/"},{"n":"14","title":"工具","url":"https://beishanair.github.io/2025/05/08/120/tool120/"},{"n":"15","title":"自定义工具","url":"https://beishanair.github.io/2025/05/08/120/pickaxe120/"},{"n":"16","title":"工具信息","url":"https://beishanair.github.io/2025/05/09/120/tooltip120/"},{"n":"17","title":"盔甲","url":"https://beishanair.github.io/2025/05/09/120/armor120/"},{"n":"18","title":"全套盔甲效果","url":"https://beishanair.github.io/2025/05/13/120/armoreffect120/"},{"n":"19","title":"马铠","url":"https://beishanair.github.io/2025/05/13/120/horsearmor120/"},{"n":"20","title":"作物","url":"https://beishanair.github.io/2025/05/13/120/crop120/"},{"n":"21","title":"多方块作物","url":"https://beishanair.github.io/2025/05/14/120/twohighcrop120/"},{"n":"22","title":"村民交易","url":"https://beishanair.github.io/2025/05/14/120/trade120/"},{"n":"23","title":"自定义村民","url":"https://beishanair.github.io/2025/05/15/120/villager120/"},{"n":"24","title":"声音事件","url":"https://beishanair.github.io/2025/05/16/120/sound120/"},{"n":"25","title":"音乐唱片","url":"https://beishanair.github.io/2025/05/16/120/musicdisc120/"},{"n":"26","title":"Blockbench模型","url":"https://beishanair.github.io/2025/05/16/120/blockbench120/"},{"n":"27","title":"方块朝向","url":"https://beishanair.github.io/2025/05/19/120/facing120/"},{"n":"28","title":"沙发类方块","url":"https://beishanair.github.io/2025/05/19/120/sofa120/"},{"n":"29","title":"可坐实体","url":"https://beishanair.github.io/2025/05/19/120/seat120/"},{"n":"30","title":"光源方块","url":"https://beishanair.github.io/2025/05/20/120/light120/"},{"n":"31","title":"床","url":"https://beishanair.github.io/2025/05/20/120/bed120/"},{"n":"32","title":"柱类方块","url":"https://beishanair.github.io/2025/05/20/120/pillar120/"},{"n":"33","title":"栅栏类方块","url":"https://beishanair.github.io/2025/05/21/120/fence120/"},{"n":"34","title":"储物类方块","url":"https://beishanair.github.io/2025/05/21/120/chest120/"},{"n":"35","title":"流体","url":"https://beishanair.github.io/2025/06/12/120/fluid120/"},{"n":"36","title":"木头","url":"https://beishanair.github.io/2025/07/05/120/wood120/"},{"n":"37","title":"Gradle配置文件","url":"https://beishanair.github.io/2025/07/06/120/gradle/"},{"n":"38","title":"告示牌","url":"https://beishanair.github.io/2025/07/06/120/sign120/"},{"n":"39","title":"船","url":"https://beishanair.github.io/2025/07/07/120/boat120/"},{"n":"40","title":"树","url":"https://beishanair.github.io/2025/07/15/120/tree120/"},{"n":"41","title":"树的世界生成","url":"https://beishanair.github.io/2025/07/17/120/treegen120/"},{"n":"42","title":"花 & 盆栽花","url":"https://beishanair.github.io/2025/07/17/120/flower120/"},{"n":"43","title":"花的世界生成","url":"https://beishanair.github.io/2025/07/17/120/flowergen120/"},{"n":"44","title":"矿物的世界生成","url":"https://beishanair.github.io/2025/07/18/120/oregen120/"},{"n":"45","title":"耐久合成","url":"https://beishanair.github.io/2025/07/18/120/reciperemainder/"},{"n":"46","title":"生物群系","url":"https://beishanair.github.io/2026/05/20/120/biome/"},{"n":"47","title":"结构","url":"https://beishanair.github.io/2026/05/20/120/structure/"},{"n":"48","title":"维度 & 传送门","url":"https://beishanair.github.io/2026/05/20/120/dimension/"},{"n":"49","title":"GeckoLib","url":"https://beishanair.github.io/2026/05/21/120/gecko/"},{"n":"50","title":"矿机","url":"https://beishanair.github.io/2026/05/22/120/rig/"},{"n":"51","title":"自定义配方类型","url":"https://beishanair.github.io/2026/05/22/120/recipeType/"},{"n":"52","title":"REI","url":"https://beishanair.github.io/2026/05/26/120/rei/"},{"n":"53","title":"网络包初步","url":"https://beishanair.github.io/2026/07/07/120/53network/"},{"n":"54","title":"精炼炉","url":"https://beishanair.github.io/2026/07/07/120/54refining/"},{"n":"55","title":"罐装机","url":"https://beishanair.github.io/2026/07/07/120/55filling/"}]},{"id":"B","name":"Fabric 1.21.X 长线教程计划","loader":"Fabric","mc":"1.21.X","tag":"Fabric-1-21","chapters":[{"n":"2-1","title":"关于1.21.2中物品的注册","url":"https://beishanair.github.io/2025/08/02/121/item1212/"},{"n":"15-1","title":"特殊渲染","url":"https://beishanair.github.io/2024/10/10/121/renderer121/"},{"n":"1","title":"开发环境配置","url":"https://beishanair.github.io/2024/07/23/121/start121/"},{"n":"2","title":"第一个物品","url":"https://beishanair.github.io/2024/09/01/121/item121/"},{"n":"3","title":"物品栏","url":"https://beishanair.github.io/2024/09/07/121/itemgroup121/"},{"n":"4","title":"第一个方块","url":"https://beishanair.github.io/2024/09/08/121/block121/"},{"n":"5","title":"战利品列表","url":"https://beishanair.github.io/2024/09/15/121/loottable121/"},{"n":"6","title":"配方","url":"https://beishanair.github.io/2024/09/18/121/recipe121/"},{"n":"7","title":"数据生成","url":"https://beishanair.github.io/2024/09/19/121/datagen121/"},{"n":"8","title":"食物","url":"https://beishanair.github.io/2024/09/22/121/food121/"},{"n":"9","title":"Mixin","url":"https://beishanair.github.io/2024/09/23/121/mixin121/"},{"n":"10","title":"燃烧物","url":"https://beishanair.github.io/2024/09/25/121/fuelItem121/"},{"n":"11","title":"探矿器（进阶物品）","url":"https://beishanair.github.io/2024/09/26/121/prospector121/"},{"n":"12","title":"Tag","url":"https://beishanair.github.io/2024/09/27/121/tag121/"},{"n":"13","title":"提示信息","url":"https://beishanair.github.io/2024/09/29/121/tooltip121/"},{"n":"14","title":"2D -> 3D（Mixin）","url":"https://beishanair.github.io/2024/10/08/121/2d3d121/"},{"n":"15","title":"建筑类方块","url":"https://beishanair.github.io/2024/10/09/121/buildingblocks121/"},{"n":"16","title":"自定义工具","url":"https://beishanair.github.io/2024/10/11/121/tool121/"},{"n":"17","title":"自定义盔甲","url":"https://beishanair.github.io/2024/10/12/121/armor121/"},{"n":"18","title":"全套盔甲效果","url":"https://beishanair.github.io/2024/10/13/121/armoreffect121/"},{"n":"19","title":"头饰","url":"https://beishanair.github.io/2024/10/14/121/hat121/"},{"n":"20","title":"作物","url":"https://beishanair.github.io/2024/10/15/121/crop121/"},{"n":"21","title":"多方块作物","url":"https://beishanair.github.io/2024/10/16/121/doublecrop121/"},{"n":"22","title":"修改战利品列表","url":"https://beishanair.github.io/2024/10/17/121/modifyloottable121/"},{"n":"23","title":"自定义交易","url":"https://beishanair.github.io/2024/10/18/121/trade121/"},{"n":"24","title":"自定义村民","url":"https://beishanair.github.io/2024/10/19/121/villager121/"},{"n":"25","title":"自定义声音","url":"https://beishanair.github.io/2024/10/20/121/sound121/"},{"n":"26","title":"音乐唱片","url":"https://beishanair.github.io/2024/10/21/121/musicdisc121/"},{"n":"27","title":"流体","url":"https://beishanair.github.io/2024/10/22/121/fluid121/"},{"n":"28","title":"马铠","url":"https://beishanair.github.io/2024/10/23/121/horsearmor121/"},{"n":"29","title":"箱子（方块实体）","url":"https://beishanair.github.io/2024/10/24/121/box121/"},{"n":"30","title":"Jar构建","url":"https://beishanair.github.io/2024/10/25/121/jar121/"},{"n":"31","title":"方块实体2","url":"https://beishanair.github.io/2024/10/26/121/polishingmachine121/"},{"n":"32","title":"自定义配方类型","url":"https://beishanair.github.io/2024/10/27/121/recipetype121/"},{"n":"33","title":"REI","url":"https://beishanair.github.io/2024/10/28/121/rei121/"},{"n":"34","title":"自定义物品和方块","url":"https://beishanair.github.io/2024/10/29/121/customitemblock121/"},{"n":"35","title":"方块朝向","url":"https://beishanair.github.io/2024/10/30/121/facing121/"},{"n":"36","title":"可连接方块","url":"https://beishanair.github.io/2024/10/31/121/connectable121/"},{"n":"37","title":"木头","url":"https://beishanair.github.io/2024/11/01/121/wood121/"},{"n":"38","title":"告示牌","url":"https://beishanair.github.io/2024/11/10/121/sign121/"},{"n":"39","title":"船","url":"https://beishanair.github.io/2024/11/10/121/boat121/"},{"n":"40","title":"树","url":"https://beishanair.github.io/2024/11/11/121/tree121/"},{"n":"41","title":"树的世界生成","url":"https://beishanair.github.io/2024/11/11/121/treegen121/"},{"n":"42","title":"花 & 盆栽花","url":"https://beishanair.github.io/2024/11/12/121/flower121/"},{"n":"43","title":"花的世界生成","url":"https://beishanair.github.io/2024/11/12/121/flowergen121/"},{"n":"44","title":"矿物的世界生成","url":"https://beishanair.github.io/2024/11/14/121/oregen121/"},{"n":"45","title":"耐久合成（配方剩余）","url":"https://beishanair.github.io/2024/11/14/121/reciperemainder121/"},{"n":"46","title":"锻造台耐久合成（Mixin）","url":"https://beishanair.github.io/2024/11/15/121/smithingtransf121/"},{"n":"47","title":"生物实体","url":"https://beishanair.github.io/2024/11/15/121/entity121/"},{"n":"48","title":"生物实体动画","url":"https://beishanair.github.io/2024/11/16/121/entityani121/"},{"n":"49","title":"攻击型生物实体","url":"https://beishanair.github.io/2024/11/16/121/attackentity121/"},{"n":"50","title":"生物群系","url":"https://beishanair.github.io/2024/11/16/121/biome121/"},{"n":"51","title":"自定义粒子","url":"https://beishanair.github.io/2024/11/16/121/particle121/"},{"n":"52","title":"自定义结构","url":"https://beishanair.github.io/2024/11/16/121/structure121/"},{"n":"53","title":"维度&传送门","url":"https://beishanair.github.io/2024/11/16/121/dim121/"},{"n":"55","title":"附魔","url":"https://beishanair.github.io/2025/08/01/121/enchantment/"},{"n":"56","title":"升级到1.21.2","url":"https://beishanair.github.io/2025/08/01/121/update1212/"}]},{"id":"C","name":"Forge 1.20.1 长线教程计划","loader":"Forge","mc":"1.20.1","tag":"Forge-1-20-1","chapters":[{"n":"1","title":"开发环境配置","url":"https://beishanair.github.io/2025/07/20/f120/start/"},{"n":"2","title":"第一个物品","url":"https://beishanair.github.io/2025/07/21/f120/item/"},{"n":"3","title":"创造模式物品栏","url":"https://beishanair.github.io/2025/07/21/f120/itemgroup/"},{"n":"4","title":"第一个方块","url":"https://beishanair.github.io/2025/07/21/f120/block/"},{"n":"5","title":"战利品列表","url":"https://beishanair.github.io/2025/07/21/f120/loot/"},{"n":"6","title":"配方","url":"https://beishanair.github.io/2025/07/21/f120/recipe/"},{"n":"7","title":"数据生成","url":"https://beishanair.github.io/2025/08/07/f120/datagen/"},{"n":"8","title":"食物","url":"https://beishanair.github.io/2025/11/18/f120/food/"},{"n":"9","title":"燃料","url":"https://beishanair.github.io/2025/11/18/f120/fuel/"},{"n":"10","title":"探矿器","url":"https://beishanair.github.io/2025/11/20/f120/prospector/"},{"n":"11","title":"Tags","url":"https://beishanair.github.io/2025/11/20/f120/tag/"},{"n":"12","title":"Jar打包","url":"https://beishanair.github.io/2025/11/20/f120/jar/"},{"n":"13","title":"建材类方块","url":"https://beishanair.github.io/2026/04/27/f120/buildingblock/"},{"n":"14","title":"工具","url":"https://beishanair.github.io/2026/04/27/f120/tool/"},{"n":"15","title":"斧 + 镐","url":"https://beishanair.github.io/2026/04/29/f120/pickaxeaxe/"},{"n":"16","title":"工具信息","url":"https://beishanair.github.io/2026/04/29/f120/tooltip/"},{"n":"17","title":"盔甲","url":"https://beishanair.github.io/2026/04/29/f120/armor/"},{"n":"18","title":"全套盔甲增益","url":"https://beishanair.github.io/2026/04/29/f120/armoreffect/"},{"n":"19","title":"作物","url":"https://beishanair.github.io/2026/04/29/f120/crop/"},{"n":"20","title":"多方块作物","url":"https://beishanair.github.io/2026/04/30/f120/doublecrop/"},{"n":"21","title":"村民交易","url":"https://beishanair.github.io/2026/04/30/f120/trade/"},{"n":"28","title":"座椅","url":"https://beishanair.github.io/2026/06/30/f120/seat/"},{"n":"29","title":"光源方块","url":"https://beishanair.github.io/2026/06/30/f120/light/"},{"n":"30","title":"床","url":"https://beishanair.github.io/2026/06/30/f120/bed/"},{"n":"31","title":"柱类方块","url":"https://beishanair.github.io/2026/06/30/f120/pillar/"},{"n":"32","title":"栅栏类方块","url":"https://beishanair.github.io/2026/06/30/f120/fence/"},{"n":"33","title":"流体","url":"https://beishanair.github.io/2026/06/30/f120/fluid/"},{"n":"34","title":"木头","url":"https://beishanair.github.io/2026/06/30/f120/wood/"},{"n":"35","title":"树","url":"https://beishanair.github.io/2026/06/30/f120/tree/"},{"n":"36","title":"树的世界生成","url":"https://beishanair.github.io/2026/07/01/f120/treegen/"},{"n":"37","title":"花 & 盆栽花","url":"https://beishanair.github.io/2026/07/01/f120/flower/"},{"n":"38","title":"花的世界生成","url":"https://beishanair.github.io/2026/07/01/f120/flowergen/"},{"n":"39","title":"矿物的世界生成","url":"https://beishanair.github.io/2026/07/01/f120/oregen/"},{"n":"40","title":"告示牌","url":"https://beishanair.github.io/2026/07/01/f120/sign/"},{"n":"41","title":"船","url":"https://beishanair.github.io/2026/07/01/f120/boat/"},{"n":"42","title":"结构","url":"https://beishanair.github.io/2026/07/02/f120/structure/"},{"n":"43","title":"生物群系","url":"https://beishanair.github.io/2026/07/02/f120/biome/"},{"n":"44","title":"维度 & 传送门","url":"https://beishanair.github.io/2026/07/02/f120/dimension/"}]},{"id":"D","name":"NeoForge 1.21.1 长线教程计划","loader":"NeoForge","mc":"1.21.1","tag":"NeoForge-1-21-1","chapters":[{"n":"1","title":"开发环境配置","url":"https://beishanair.github.io/2025/07/22/nf121/start/"},{"n":"2","title":"第一个物品","url":"https://beishanair.github.io/2025/07/25/nf121/item/"},{"n":"3","title":"创造模式物品栏","url":"https://beishanair.github.io/2025/07/25/nf121/itemgroup/"},{"n":"4","title":"第一个方块","url":"https://beishanair.github.io/2025/07/25/nf121/block/"},{"n":"5","title":"战利品列表","url":"https://beishanair.github.io/2025/07/25/nf121/loottable/"},{"n":"6","title":"配方","url":"https://beishanair.github.io/2025/07/25/nf121/recipe/"},{"n":"7","title":"数据生成","url":"https://beishanair.github.io/2025/08/19/nf121/datagen/"},{"n":"8","title":"食物","url":"https://beishanair.github.io/2025/11/18/nf121/food/"},{"n":"9","title":"燃料","url":"https://beishanair.github.io/2025/11/18/nf121/fuel/"},{"n":"10","title":"探矿器","url":"https://beishanair.github.io/2025/11/20/nf121/prospector/"},{"n":"11","title":"Tags","url":"https://beishanair.github.io/2025/11/20/nf121/tag/"},{"n":"12","title":"Jar打包","url":"https://beishanair.github.io/2025/11/20/nf121/jar/"},{"n":"25","title":"Blockbench模型","url":"https://beishanair.github.io/2026/07/09/nf121/25blockbench/"},{"n":"26","title":"方块朝向","url":"https://beishanair.github.io/2026/07/09/nf121/26facing/"},{"n":"27","title":"沙发类方块","url":"https://beishanair.github.io/2026/07/09/nf121/27sofa/"},{"n":"28","title":"座椅","url":"https://beishanair.github.io/2026/08/09/nf121/28seat/"},{"n":"29","title":"光源方块","url":"https://beishanair.github.io/2026/08/09/nf121/29light/"},{"n":"30","title":"床","url":"https://beishanair.github.io/2026/08/09/nf121/30bed/"},{"n":"31","title":"柱类方块","url":"https://beishanair.github.io/2026/08/09/nf121/31pillar/"},{"n":"32","title":"栅栏类方块","url":"https://beishanair.github.io/2026/08/09/nf121/32fence/"},{"n":"33","title":"流体","url":"https://beishanair.github.io/2026/08/14/nf121/33fluid/"},{"n":"34","title":"木头","url":"https://beishanair.github.io/2026/08/15/nf121/34wood/"},{"n":"35","title":"树","url":"https://beishanair.github.io/2026/08/15/nf121/35tree/"},{"n":"36","title":"树的世界生成","url":"https://beishanair.github.io/2026/08/15/nf121/36treegen/"},{"n":"37","title":"花 & 盆栽花","url":"https://beishanair.github.io/2026/08/15/nf121/37flower/"},{"n":"38","title":"花的世界生成","url":"https://beishanair.github.io/2026/08/15/nf121/38flowergen/"},{"n":"39","title":"矿物的世界生成","url":"https://beishanair.github.io/2026/08/15/nf121/39oregen/"},{"n":"40","title":"告示牌","url":"https://beishanair.github.io/2026/08/15/nf121/40sign/"},{"n":"41","title":"船","url":"https://beishanair.github.io/2026/08/16/nf121/41boat/"},{"n":"42","title":"结构","url":"https://beishanair.github.io/2026/08/16/nf121/42structure/"},{"n":"43","title":"生物群系","url":"https://beishanair.github.io/2026/08/16/nf121/43biome/"},{"n":"44","title":"维度 & 传送门","url":"https://beishanair.github.io/2026/08/16/nf121/44dimension/"}]},{"id":"E","name":"Fabric 26.1 教程计划","loader":"Fabric","mc":"26.1","tag":"Fabric","chapters":[{"n":"1","title":"开发环境配置","url":"https://beishanair.github.io/2026/05/27/fa261/start/"},{"n":"2","title":"第一个物品","url":"https://beishanair.github.io/2026/05/27/fa261/item/"},{"n":"3","title":"创造模式物品栏","url":"https://beishanair.github.io/2026/05/28/fa261/tabs/"},{"n":"4","title":"第一个方块","url":"https://beishanair.github.io/2026/05/28/fa261/block/"},{"n":"5","title":"战利品列表","url":"https://beishanair.github.io/2026/06/29/fa261/loottable/"},{"n":"6","title":"配方","url":"https://beishanair.github.io/2026/06/29/fa261/recipe/"},{"n":"7","title":"数据生成","url":"https://beishanair.github.io/2026/06/29/fa261/datagen/"},{"n":"8","title":"食物","url":"https://beishanair.github.io/2026/06/29/fa261/food/"},{"n":"22","title":"自定义交易","url":"https://beishanair.github.io/2026/10/26/fa261/22trade/"},{"n":"23","title":"自定义村民","url":"https://beishanair.github.io/2026/10/27/fa261/23villager/"},{"n":"24","title":"自定义声音","url":"https://beishanair.github.io/2026/10/27/fa261/24sound/"},{"n":"25","title":"音乐唱片","url":"https://beishanair.github.io/2026/10/27/fa261/25musicdisc/"},{"n":"26","title":"Blockbench模型","url":"https://beishanair.github.io/2026/10/27/fa261/26blockbench/"},{"n":"27","title":"方块朝向","url":"https://beishanair.github.io/2026/10/27/fa261/27facing/"},{"n":"28","title":"沙发类方块","url":"https://beishanair.github.io/2026/10/27/fa261/28sofa/"},{"n":"29","title":"座椅","url":"https://beishanair.github.io/2026/10/27/fa261/29seat/"},{"n":"30","title":"光源方块","url":"https://beishanair.github.io/2026/10/27/fa261/30light/"},{"n":"31","title":"床","url":"https://beishanair.github.io/2026/10/27/fa261/31bed/"},{"n":"32","title":"柱类方块","url":"https://beishanair.github.io/2026/10/27/fa261/32pillar/"},{"n":"33","title":"栅栏类方块","url":"https://beishanair.github.io/2026/10/27/fa261/33fence/"},{"n":"34","title":"流体","url":"https://beishanair.github.io/2026/11/02/fa261/34fluid/"},{"n":"35","title":"木头","url":"https://beishanair.github.io/2026/11/02/fa261/35wood/"},{"n":"36","title":"树","url":"https://beishanair.github.io/2026/11/02/fa261/36tree/"},{"n":"37","title":"树的世界生成","url":"https://beishanair.github.io/2026/11/02/fa261/37treegen/"},{"n":"38","title":"花 & 盆栽花","url":"https://beishanair.github.io/2026/11/02/fa261/38flower/"},{"n":"39","title":"花的世界生成","url":"https://beishanair.github.io/2026/11/02/fa261/39flowergen/"},{"n":"40","title":"矿物的世界生成","url":"https://beishanair.github.io/2026/11/02/fa261/40oregen/"},{"n":"41","title":"结构","url":"https://beishanair.github.io/2026/11/02/fa261/41structure/"},{"n":"42","title":"生物群系","url":"https://beishanair.github.io/2026/11/02/fa261/42biome/"},{"n":"43","title":"维度 & 传送门","url":"https://beishanair.github.io/2026/11/02/fa261/43dimension/"}]},{"id":"F","name":"NeoForge 26.1 教程计划","loader":"NeoForge","mc":"26.1","tag":"NeoForge","chapters":[]}],"standalones":[{"title":"开篇（博客第一篇文章）","url":"https://beishanair.github.io/2024/07/13/121/first-blog/"},{"title":"FAQ（常见问题，全版本通用）","url":"https://beishanair.github.io/2024/09/04/faq/"},{"title":"前言 1.20 Fabric 长线教程计划","url":"https://beishanair.github.io/2025/02/19/120/120/"},{"title":"Python × Minecraft 粒子特效教程","url":"https://beishanair.github.io/2025/07/20/particle/"}]};
 
 const JAVA = { A: 'Java 17', B: 'Java 21', C: 'Java 17', D: 'Java 21', E: 'Java 25', F: 'Java 25' };
 const GAPS = { A: [], B: ['54（本站无 #54）'], C: ['22-27（未发布）'], D: ['13-24（未发布）'], E: [], F: ['全系列待开'] };
-const VERSION = '2.2.0';
+const VERSION = '2.3.0';
 
 // 系列画像：compare / env / plan 共用。只写有把握的定性事实，不写易过期的精确小版本号。
 const SERIES_INFO = {
@@ -357,6 +360,8 @@ const TOOL_DEFS = [
           besson_tutorial_plan: '按目标生成学习路线（新手/进阶/迁移/26.1 前沿）',
           besson_tutorial_compare: '两个系列/版本的 API 与工程差异对比',
           besson_tutorial_env: '某 MC 版本 + Loader 的环境搭建清单与命令',
+    besson_mod_project: '检查本地模组工程：加载器/版本/清单/主类/常见问题',
+    besson_mod_migrate: '跨系列迁移清单：映射/构建插件/注册/事件/清单文件',
         },
       };
     },
@@ -603,6 +608,188 @@ const TOOL_DEFS = [
           '改完注册代码没重启客户端 → 看不到新内容（注册发生在启动期）',
         ],
         next: ['besson_tutorial_series：列出该系列全部章节', 'besson_tutorial_fetch：抓取第一章正文动手'],
+        version: VERSION,
+      };
+    },
+  },
+  {
+    name: 'besson_mod_project',
+    description:
+      '检查本地 Minecraft 模组工程（目录 path）：识别加载器（Fabric / Forge / NeoForge）、MC 版本、Java 工具链、构建插件、mod 清单文件、主类与入口点，' +
+      '并给出常见问题（版本不匹配、清单缺失、JAVA_HOME 错误等）与下一步建议。path 传项目根目录（含 build.gradle 或 gradle.properties 的目录）。',
+    parameters: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: '模组工程根目录（绝对路径；缺省为仓库/工作目录）' },
+      },
+      required: [],
+      additionalProperties: true,
+    },
+    execute: (args) => {
+      const a = args && typeof args === 'object' ? args : {};
+      const base = a.path ? resolve(String(a.path)) : resolve('.');
+      if (!existsSync(base)) return { error: '目录不存在：' + base };
+      const issues = [];
+      const info = { path: base };
+      let gradleProps = {};
+      for (const name of ['gradle.properties']) {
+        const f = join(base, name);
+        if (!existsSync(f)) continue;
+        const text = readFileSync(f, 'utf8');
+        for (const line of text.split(/\r?\n/)) {
+          const m = line.match(/^\s*([A-Za-z0-9_.-]+)\s*=\s*(.+)$/);
+          if (m && !m[1].startsWith('#')) gradleProps[m[1]] = m[2].trim();
+        }
+        info.gradleProperties = Object.fromEntries(
+          Object.entries(gradleProps).filter(([k]) => /version|loader|mapping|moddev|toolchain|java/i.test(k)),
+        );
+      }
+      // 构建文件与构建插件
+      let buildText = '';
+      for (const name of ['build.gradle.kts', 'build.gradle']) {
+        const f = join(base, name);
+        if (existsSync(f)) { buildText = readFileSync(f, 'utf8'); info.buildFile = name; break; }
+      }
+      if (!buildText) {
+        issues.push('未找到 build.gradle / build.gradle.kts —— 可能不是 Gradle 工程');
+      } else {
+        const plugins = [];
+        if (/net\.neoforged\.moddev|net\.neoforged\.gradle\.userdev|neoforge/i.test(buildText)) plugins.push('neoforge');
+        if (/fabric-loom|fabric-loader/i.test(buildText) || typeof gradleProps.fabric_loader_version === 'string') plugins.push('fabric');
+        if (/net\.minecraftforge\.gradle|forgegradle/i.test(buildText)) plugins.push('forge');
+        if (plugins.length === 0) issues.push('无法从构建文件识别加载器插件（fabric-loom / ForgeGradle / NeoGradle / ModDevGradle）');
+        info.buildPlugins = plugins;
+        const javaMatch = buildText.match(/JavaLanguageVersion\.of\((\d+)\)|languageVersion\s*=\s*[^\d]*(\d+)|JavaVersion\.VERSION_(\d+)/);
+        if (javaMatch) info.javaToolchain = 'Java ' + (javaMatch[1] || javaMatch[2] || javaMatch[3]);
+      }
+      // MC 版本
+      const mc = gradleProps.minecraft_version || gradleProps.fabric_minecraft_version ||
+        (gradleProps.neoforge_version ? '1.21.1' : '') ||
+        ((buildText.match(/minecraft_version\s*=\s*['"]?([\w.]+)/) || [])[1] || '');
+      if (mc) info.minecraft = mc;
+      // mod 清单
+      const resDir = join(base, 'src', 'main', 'resources');
+      const modfiles = [];
+      for (const [file, loader] of [
+        [join(resDir, 'META-INF', 'neoforge.mods.toml'), 'neoforge'],
+        [join(resDir, 'META-INF', 'mods.toml'), 'forge'],
+        [join(resDir, 'fabric.mod.json'), 'fabric'],
+      ]) {
+        if (existsSync(file)) {
+          modfiles.push(file);
+          const text = readFileSync(file, 'utf8');
+          info.modfile = info.modfile || { file: file.split(/[\\/]/).pop(), loader };
+          const idMatch = text.match(/modId\s*=\s*"([^"]+)"/) || text.match(/"id"\s*:\s*"([^"]+)"/);
+          if (idMatch) info.modId = idMatch[1];
+        }
+      }
+      if (modfiles.length === 0) issues.push('src/main/resources 下没有 fabric.mod.json / META-INF/mods.toml / META-INF/neoforge.mods.toml');
+      // 主类
+      const javaFiles = [];
+      const walk = (dir) => {
+        if (!existsSync(dir)) return;
+        for (const name of readdirSync(dir)) {
+          const p = join(dir, name);
+          const st = statSync(p);
+          if (st.isDirectory()) walk(p);
+          else if (/\.java$/.test(name)) javaFiles.push(p);
+        }
+      };
+      walk(join(base, 'src', 'main', 'java'));
+      info.javaFileCount = javaFiles.length;
+      let mainClass = null;
+      for (const p of javaFiles) {
+        const text = readFileSync(p, 'utf8');
+        if (/@Mod\s*\(/.test(text) || /@EventBusSubscriber/.test(text) || /ModInitializer/.test(text) || /implements.*ModInitializer/.test(text)) {
+          mainClass = p.replace(/^.*src[\\/]main[\\/]java[\\/]/, '').replace(/\.java$/, '').replace(/[\\/]/g, '.');
+          break;
+        }
+      }
+      if (mainClass) info.mainClass = mainClass;
+      else if (javaFiles.length) issues.push('src/main/java 中未找到 @Mod / ModInitializer 主类');
+      // 与系列画像对照
+      let matched = null;
+      if (info.minecraft && (info.buildPlugins || []).length) {
+        const loader = info.buildPlugins[0];
+        const candidates = DATA.series.filter((s) => String(s.mc || '').toLowerCase().replace(/\.x$/, '') === String(info.minecraft).toLowerCase().replace(/\.x$/, '') || String(info.minecraft).startsWith('1.21'));
+        const loaderMatch = candidates.find((s) => String(s.loader || '').toLowerCase() === loader);
+        matched = (loaderMatch || candidates[0] || null);
+      }
+      if (matched) {
+        info.matchedSeries = { id: matched.id, name: matched.name, mc: matched.mc, loader: matched.loader, java: JAVA[matched.id] };
+        const expectJava = String(SERIES_INFO[matched.id].jdk || '');
+        const actualJava = (info.javaToolchain || '').match(/(\d+)/);
+        if (expectJava && actualJava && actualJava[1] !== expectJava) {
+          issues.push('Java 工具链 ' + info.javaToolchain + ' 与站点预期 Java ' + expectJava + ' 不一致（' + matched.id + ' 系列）');
+        }
+      } else if (info.minecraft) {
+        issues.push('MC 版本 ' + info.minecraft + ' 未匹配到教程系列（A 1.20.1 / B 1.21.X / C 1.20.1 Forge / D 1.21.1 / E 26.1 / F 26.1）');
+      }
+      return {
+        ...info,
+        issues,
+        ok: issues.length === 0,
+        next: ['besson_mod_migrate：从当前系列规划迁移', 'besson_tutorial_env：按匹配系列生成环境清单', 'besson_tutorial_series：查看该系列全部章节'],
+      };
+    },
+  },
+  {
+    name: 'besson_mod_migrate',
+    description:
+      '生成两个教程系列（或 MC 版本 / Loader）之间的迁移清单：Java 升级、构建插件替换、mod 清单文件替换、包名/映射变化、注册方式与事件系统差异、' +
+      '数据生成迁移，附教程迁移章节链接。from/to 传系列字母（A-F）或关键词（如 1.20.1、1.21.1、26.1、fabric、forge、neoforge）。',
+    parameters: {
+      type: 'object',
+      properties: {
+        from: { type: 'string', description: '当前系列：A/B/C/D/E/F 或关键词（如 1.20.1 fabric）' },
+        to: { type: 'string', description: '目标系列：A/B/C/D/E/F 或关键词（如 1.21.1 neoforge）' },
+        level: { type: 'string', description: '可选：beginner / intermediate / advanced（影响清单详略）' },
+      },
+      required: ['from', 'to'],
+      additionalProperties: true,
+    },
+    execute: (args) => {
+      const a = args && typeof args === 'object' ? args : {};
+      const sa = resolveSeries(a.from);
+      const sb = resolveSeries(a.to);
+      if (!sa || !sb) {
+        return { error: '无法解析：from=' + (a.from || '') + ', to=' + (a.to || '') + '。可用系列 A-F 或 1.20.1 / 1.21.1 / 26.1 / fabric / forge / neoforge' };
+      }
+      if (sa.id === sb.id) return { error: 'from 与 to 是同一系列 ' + sa.id + '，无需迁移' };
+      const ia = SERIES_INFO[sa.id] || {};
+      const ib = SERIES_INFO[sb.id] || {};
+      const diff = {};
+      for (const k of ['mc', 'loader', 'java', 'jdk', 'build', 'pkg', 'modfile', 'entrypoint', 'registry', 'events', 'datagen']) {
+        if ((ia[k] || '') !== (ib[k] || '')) diff[k] = { from: ia[k] || '', to: ib[k] || '' };
+      }
+      const steps = [];
+      const push = (topic, detail) => steps.push({ order: steps.length + 1, topic, detail });
+      push('Java 版本与工具链', 'JDK 从 ' + (ia.jdk || '?') + ' 升级到 ' + (ib.jdk || '?') + '；修改 gradle 的 Java toolchain 与 IDE SDK。');
+      push('构建插件与 Gradle 配置', '替换构建插件：' + (ia.build || '') + ' → ' + (ib.build || '') + '；同步更新 gradle.properties 中的版本字段。');
+      push('mod 清单文件', '清单文件从 ' + (ia.modfile || '') + ' 换成 ' + (ib.modfile || '') + '；loader 字段与依赖版本同步修改。');
+      push('包名与映射', '映射从 ' + (ia.pkg || '') + ' 变为 ' + (ib.pkg || '') + '；全局替换 import 前检查映射差异。');
+      push('注册方式', (ia.registry || '') + ' → ' + (ib.registry || '') + '；注意注册事件/持有者写法差异。');
+      push('事件系统', (ia.events || '') + ' → ' + (ib.events || '') + '；事件注解与监听注册方式不同。');
+      push('数据生成', (ia.datagen || '') + ' → ' + (ib.datagen || '') + '；生成器入口与输出目录检查。');
+      push('入口点', (ia.entrypoint || '') + ' → ' + (ib.entrypoint || '') + '；主类结构与初始化时机核对。');
+      let refs = [];
+      for (const id of [sa.id, sb.id]) {
+        for (const kw of ['迁移', '环境', '第一个', '配置', '升级']) {
+          for (const c of chapterMatches(id, kw, 2)) refs.push(c);
+        }
+      }
+      const seen = new Set();
+      refs = refs.filter((c) => { const key = c.series + '#' + c.chapter; if (seen.has(key)) return false; seen.add(key); return true; });
+      void a.level;
+      return {
+        from: { series: sa.id, name: sa.name, mc: ia.mc, loader: ia.loader, java: ia.java },
+        to: { series: sb.id, name: sb.name, mc: ib.mc, loader: ib.loader, java: ib.java },
+        javaSteps: (ia.java || '') + ' → ' + (ib.java || ''),
+        diff,
+        steps,
+        refs,
+        templates: { [sa.id]: TEMPLATES[sa.id], [sb.id]: TEMPLATES[sb.id] },
+        note: '迁移节奏：先在构建期打通（Gradle/清单/主类可编译），再逐模块迁移注册与事件；F 系列（NeoForge 26.1）未开更，26.1 只参照 E。',
         version: VERSION,
       };
     },
